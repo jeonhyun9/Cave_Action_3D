@@ -31,7 +31,7 @@ public class CamRotate : MonoBehaviour
         float v = playerInput.mouseY;
 
         //마우스 입력이 있을때만 카메라 회전
-        if(h!= 0)
+        if(h!= 0 && v!=0)
         {
             angleX = h * speed * Time.deltaTime;
             angleY = v * speed * Time.deltaTime;
