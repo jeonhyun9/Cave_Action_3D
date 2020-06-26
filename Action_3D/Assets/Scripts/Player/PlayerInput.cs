@@ -44,19 +44,31 @@ public class PlayerInput : MonoBehaviour
     public string guardButtonName = "Guard";
     public string turnButtonName = "Turn";
     public string rollButtonName = "Roll";
-
-   
+    
     private PlayerMovement playerMovement;
     public GameObject sword;
     public GameObject trail;
+    public GameObject enchantTrail;
+    public GameObject normalTrail;
+    public GameObject normalIcon;
+    public GameObject enchantIcon;
+    public GameObject enchant;
     public float hp = 100f;
     public float stamina = 100f;
+    public float mana = 100f;
     public Slider hpSlider;
     public Slider staminaSlider;
+    public Image manaImage;
     public bool isAttackEnd;
     public bool isRollEnd;
     private bool isBackButtonInput = false;
     public Vector3 dir;
+
+    public bool isEnchanted = false;
+
+    private TrailRenderer trailRenderer;
+   
+
     public enum PlayerState
     {
         IDLE,
@@ -64,6 +76,8 @@ public class PlayerInput : MonoBehaviour
         ATTACK,
         GUARD,
         ROLL,
+        START_CASTING,
+        END_CASTING,
         HIT,
         DIE,
     }
@@ -83,6 +97,7 @@ public class PlayerInput : MonoBehaviour
 
     private void Start()
     {
+        trail = normalTrail;
         playerAnim = GetComponent<Animator>();
         playerMovement = GetComponent<PlayerMovement>();
         state = PlayerState.IDLE;
@@ -94,6 +109,13 @@ public class PlayerInput : MonoBehaviour
     {
         hpSlider.value = hp / 100;
         staminaSlider.value = stamina / 100;
+        manaImage.fillAmount = mana / 100;
+
+        //인챈트 중일 때는 마나가 감소
+        if(isEnchanted)
+        {
+            mana -= Time.deltaTime;
+        }
         //입력 감지
         if (state != PlayerState.HIT && state != PlayerState.DIE)
         {
@@ -107,7 +129,8 @@ public class PlayerInput : MonoBehaviour
             mouseX = Input.GetAxis("Mouse X");
             mouseY = Input.GetAxis("Mouse Y");
             //안맞을 때 실행
-            if (move == 0 && sideMove == 0 && isAttackEnd == true && isRollEnd == true)
+            if (move == 0 && sideMove == 0 && isAttackEnd == true && isRollEnd == true
+                && state != PlayerState.START_CASTING && state != PlayerState.END_CASTING)
             {
                 //if(isBackButtonInput) transform.forward *= -1;
                 isBackButtonInput = false;
@@ -126,6 +149,12 @@ public class PlayerInput : MonoBehaviour
             {
                 stamina -= 35;
                 Roll();
+            }
+
+            if (Input.GetKeyDown(KeyCode.F))
+            {
+                this.Enchant();
+                playerAnim.SetTrigger("CASTING");
             }
         }
 
@@ -260,4 +289,29 @@ public class PlayerInput : MonoBehaviour
         }
     }
 
+    public void StartCasting()
+    {
+        state = PlayerState.START_CASTING;
+    }
+
+    public void EndCasting()
+    {
+        state = PlayerState.END_CASTING;
+        StartCoroutine(IdleCoroutine());
+    }
+
+    IEnumerator IdleCoroutine()
+    {
+        yield return new WaitForSeconds(0.5f);
+        state = PlayerState.IDLE;
+    }
+
+    private void Enchant()
+    {
+        isEnchanted = true;
+        trail = enchantTrail;
+        enchant.SetActive(true);
+        enchantIcon.SetActive(true);
+        normalIcon.SetActive(false);
+    }
 }
