@@ -10,6 +10,7 @@ public class PlayerInput : MonoBehaviour
 {
     private static PlayerInput instance = null;
 
+    //싱글톤
     private void Awake()
     {
         if(null == instance)
@@ -44,11 +45,14 @@ public class PlayerInput : MonoBehaviour
     public string turnButtonName = "Turn";
     public string rollButtonName = "Roll";
 
+   
     private PlayerMovement playerMovement;
     public GameObject sword;
     public GameObject trail;
-    public float Hp = 100f;
-    public float Stamina = 100f;
+    public float hp = 100f;
+    public float stamina = 100f;
+    public Slider hpSlider;
+    public Slider staminaSlider;
     public bool isAttackEnd;
     public bool isRollEnd;
     private bool isBackButtonInput = false;
@@ -88,21 +92,20 @@ public class PlayerInput : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        hpSlider.value = hp / 100;
+        staminaSlider.value = stamina / 100;
         //입력 감지
-        move = Input.GetAxis(moveAxisName);
-        sideMove = Input.GetAxis(sideMoveAxisName);
-        attack = Input.GetButton(attackButtonName);
-        guard = Input.GetButtonDown(guardButtonName);
-        turn = Input.GetButton(turnButtonName);
-        roll = Input.GetButton(rollButtonName);
-     
-        mouseX = Input.GetAxis("Mouse X");
-        mouseY = Input.GetAxis("Mouse Y");
-       
-        //if ()
-
         if (state != PlayerState.HIT && state != PlayerState.DIE)
         {
+            move = Input.GetAxis(moveAxisName);
+            sideMove = Input.GetAxis(sideMoveAxisName);
+            attack = Input.GetButton(attackButtonName);
+            guard = Input.GetButtonDown(guardButtonName);
+            turn = Input.GetButton(turnButtonName);
+            roll = Input.GetButton(rollButtonName);
+
+            mouseX = Input.GetAxis("Mouse X");
+            mouseY = Input.GetAxis("Mouse Y");
             //안맞을 때 실행
             if (move == 0 && sideMove == 0 && isAttackEnd == true && isRollEnd == true)
             {
@@ -112,16 +115,24 @@ public class PlayerInput : MonoBehaviour
             }
 
             //공격 애니메이션이 끝난 상태일 때, 왼클릭 시 공격
-            if (attack && isAttackEnd)
+            if (attack && isAttackEnd && stamina > 1)
             {
+                stamina -= 1;
                 Attack();
             }
 
             //구르기 애니메이션이 끝난 상태일 때 , 스페이스 클릭시 구르기
-            if (roll && isRollEnd)
+            if (roll && isRollEnd && stamina > 35)
             {
+                stamina -= 35;
                 Roll();
             }
+        }
+
+        if(stamina < 100)
+        {
+            if(state == PlayerState.MOVE || state == PlayerState.IDLE)
+            stamina += 1 * Time.deltaTime;
         }
 
         //옆으로 이동 중인지 판별한다.
@@ -154,7 +165,7 @@ public class PlayerInput : MonoBehaviour
         {
             transform.forward = transform.forward - (-transform.right);
         }
-        if(move < 0)
+        if(move < 0 && sideMove == 0)
         {
             isBackButtonInput = true;
             transform.forward *= -1;
@@ -209,7 +220,6 @@ public class PlayerInput : MonoBehaviour
         playerAnim.SetInteger("ATTACKNUM", rand);
     }
 
-
     public void SwordTrailOn()
     {
         trail.SetActive(true);
@@ -220,11 +230,34 @@ public class PlayerInput : MonoBehaviour
         trail.SetActive(false);
     }
 
+    public void HitEnd()
+    {
+        state = PlayerState.IDLE;
+        isAttackEnd = true;
+        sword.SetActive(false);
+        print("피격애니메이션 종료");
+    }
+
     public void PlayerDamage(float value)
     {
-        Hp -= value;
-        playerAnim.SetTrigger("HIT");
-        print("플레이어의 현재 HP" + Hp);
+        //구르기일땐 피격 X
+        if (state != PlayerState.DIE && state != PlayerState.HIT && state != PlayerState.ROLL)
+        {
+            if (hp - value <= 0)
+            {
+                hp -= value;
+                state = PlayerState.DIE;
+                playerAnim.SetTrigger("DIE");
+                return;
+            }
+            else
+            {
+                hp -= value;
+                state = PlayerState.HIT;
+                playerAnim.SetTrigger("HIT");
+                print("플레이어의 현재 HP" + hp);
+            }
+        }
     }
 
 }
