@@ -8,6 +8,7 @@ public class RuneStone : MonoBehaviour
 {
     public GameObject fire;
     public GameObject floatingText;
+    public GameObject fireEffect;
     private TextMeshProUGUI textMeshPro;
     private byte alpha;
     private Color targetColor;
@@ -21,12 +22,22 @@ public class RuneStone : MonoBehaviour
     }
     void Update()
     {
+        if (Vector3.Distance(transform.position, PlayerInput.Instance.transform.position) < 2f
+            && !fire.activeSelf)
+        {
+            PlayerInput.Instance.isFireLit = true;
+        }
+        else PlayerInput.Instance.isFireLit = false;
         //플레이어가 캐스팅 중이면 실행
         if(PlayerInput.Instance.state == PlayerInput.PlayerState.END_CASTING && 
             Vector3.Distance(transform.position,PlayerInput.Instance.transform.position) < 2f)
         {
             if (!fire.activeSelf)
             {
+                PlayerInput.Instance.mana = 100;
+                GameObject effect = Instantiate(fireEffect, this.transform);
+                effect.transform.position += new Vector3(0, 0.1f, 0);
+                Destroy(effect, 1f);
                 fire.SetActive(true);
                 floatingText.SetActive(true);
             }
@@ -59,4 +70,5 @@ public class RuneStone : MonoBehaviour
             textMeshPro.color = targetColor;
         }
     }
+
 }

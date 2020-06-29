@@ -4,6 +4,8 @@ namespace UnityStandardAssets.Utility
 {
 	public class SmoothFollow : MonoBehaviour
 	{
+		public float speed = 50;
+		float angleX, angleY;
 		// The target we are following
 		[SerializeField]
 		private Transform target;
@@ -37,9 +39,9 @@ namespace UnityStandardAssets.Utility
             {
 				rotationDamping = 0.1f;
             }
-				// Calculate the current rotation angles
+			// Calculate the current rotation angles
 
-				var wantedRotationAngle = target.eulerAngles.y;
+			var wantedRotationAngle = target.eulerAngles.y;
 			var wantedHeight = target.position.y + height;
 
 			var currentRotationAngle = transform.eulerAngles.y;
@@ -62,11 +64,9 @@ namespace UnityStandardAssets.Utility
 			// Set the height of the camera
 			transform.position = new Vector3(transform.position.x, currentHeight, transform.position.z);
 
-			// Always look at the target
-			//if(PlayerInput.Instance.isRollEnd)
-            {
-				transform.LookAt(target);
-            }
+			transform.LookAt(target);
+			
+			transform.eulerAngles += new Vector3(-30, 0, 0);
 		}
 	}
 }

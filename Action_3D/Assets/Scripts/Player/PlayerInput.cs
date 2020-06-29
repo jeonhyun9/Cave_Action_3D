@@ -44,7 +44,8 @@ public class PlayerInput : MonoBehaviour
     public string guardButtonName = "Guard";
     public string turnButtonName = "Turn";
     public string rollButtonName = "Roll";
-    
+
+    public bool isFireLit = false;
     private PlayerMovement playerMovement;
     public GameObject sword;
     public GameObject trail;
@@ -52,10 +53,19 @@ public class PlayerInput : MonoBehaviour
     public GameObject normalTrail;
     public GameObject normalIcon;
     public GameObject enchantIcon;
+    //불 파티클
     public GameObject enchant;
+
+    //피격 프리팹
+    public GameObject hitPrefab;
+    //기본 피격 이펙트
+    public GameObject normalHit;
+    //불 피격 이펙트
+    public GameObject FireHit;
+
     public float hp = 100f;
     public float stamina = 100f;
-    public float mana = 100f;
+    public float mana = 10f;
     public Slider hpSlider;
     public Slider staminaSlider;
     public Image manaImage;
@@ -64,6 +74,7 @@ public class PlayerInput : MonoBehaviour
     private bool isBackButtonInput = false;
     public Vector3 dir;
 
+    //칼에 불 붙였는지 판별
     public bool isEnchanted = false;
 
     private TrailRenderer trailRenderer;
@@ -79,6 +90,7 @@ public class PlayerInput : MonoBehaviour
         START_CASTING,
         END_CASTING,
         HIT,
+        KNOCKBACK,
         DIE,
     }
 
@@ -101,6 +113,7 @@ public class PlayerInput : MonoBehaviour
         playerAnim = GetComponent<Animator>();
         playerMovement = GetComponent<PlayerMovement>();
         state = PlayerState.IDLE;
+        hitPrefab = normalHit;
         isAttackEnd = true;
         isRollEnd = true;
     }
@@ -115,6 +128,16 @@ public class PlayerInput : MonoBehaviour
         if(isEnchanted)
         {
             mana -= Time.deltaTime;
+            if(hitPrefab == normalHit)hitPrefab = FireHit;
+            if (mana < 2)
+            {
+                isEnchanted = false;
+                enchant.SetActive(false);
+            }
+        }
+        else if (hitPrefab == FireHit)
+        {
+            hitPrefab = normalHit;
         }
         //입력 감지
         if (state != PlayerState.HIT && state != PlayerState.DIE)
@@ -151,9 +174,8 @@ public class PlayerInput : MonoBehaviour
                 Roll();
             }
 
-            if (Input.GetKeyDown(KeyCode.F))
+            if (Input.GetKeyDown(KeyCode.F) && mana > 0)
             {
-                this.Enchant();
                 playerAnim.SetTrigger("CASTING");
             }
         }
@@ -289,6 +311,27 @@ public class PlayerInput : MonoBehaviour
         }
     }
 
+    public void PlayerDamage(float value, string trigger)
+    {
+        if (state != PlayerState.DIE && state != PlayerState.HIT && state != PlayerState.ROLL)
+        {
+            if (hp - value <= 0)
+            {
+                hp -= value;
+                state = PlayerState.DIE;
+                playerAnim.SetTrigger("DIE");
+                return;
+            }
+            else
+            {
+                hp -= value;
+                state = PlayerState.HIT;
+                playerAnim.SetTrigger(trigger);
+                print("플레이어의 현재 HP" + hp);
+            }
+        }
+    }
+
     public void StartCasting()
     {
         state = PlayerState.START_CASTING;
@@ -308,10 +351,30 @@ public class PlayerInput : MonoBehaviour
 
     private void Enchant()
     {
-        isEnchanted = true;
-        trail = enchantTrail;
-        enchant.SetActive(true);
-        enchantIcon.SetActive(true);
-        normalIcon.SetActive(false);
+        //인챈트 중이면 인챈트 끔
+        if (isEnchanted)
+        {
+            if(isFireLit)
+            {
+                //룬스톤이 주변에 있으면 인챈트 상태 유지
+                isFireLit = false;
+                return;
+            }
+            isEnchanted = false;
+            trail = normalTrail;
+            enchant.SetActive(false);
+            enchantIcon.SetActive(false);
+            normalIcon.SetActive(true);
+        }
+        //인챈트 중이 아니면 인챈트함
+        else
+        {
+            isEnchanted = true;
+            trail = enchantTrail;
+            enchant.SetActive(true);
+            enchantIcon.SetActive(true);
+            normalIcon.SetActive(false);
+        }
     }
+
 }

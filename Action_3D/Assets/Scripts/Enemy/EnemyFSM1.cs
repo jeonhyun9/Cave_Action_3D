@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics.Eventing.Reader;
+using System.Text;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UIElements;
@@ -19,12 +20,21 @@ public class EnemyFSM1 : MonoBehaviour
         RETURN,
         DAMAGED,
         DIE,
+        REVIVE,
+        DIE_FIRE,
     }
 
+  
     //애니메이션을 제어하기 위한 애니메이터 컴포넌트
     Animator anim;
 
     EnemyState state; //몬스터 상태 변수
+    #region "자살 좀비"
+    //자살 좀비일 경우
+    public bool isTypeSuicide = false;
+    public GameObject explosionPrefab;
+    public GameObject bloodPrefab;
+    #endregion
 
     //유용한 기능
     #region "IDLE 상태에 필요한 변수들"
@@ -43,12 +53,14 @@ public class EnemyFSM1 : MonoBehaviour
     #endregion
 
     #region "DIE 상태에 필요한 변수들"
+    private float reviveTimer = 0f;
+    public float reviveTime = 5.0f;
+    public bool hitByFire = false;
     #endregion
 
     #region "IDLE 상태에 필요한 변수들"
     #endregion
 
-    //필요한 변수들
     public float findRange = 15f;   //플레이어를 찾는 범위
     public float attackRange = 2f;  //공격 가능 범위
     public float moveRange = 30f;
@@ -111,6 +123,11 @@ public class EnemyFSM1 : MonoBehaviour
             case EnemyState.ATTACK:
                 Attack();
                 break;
+            case EnemyState.DIE:
+                Die();
+                break;
+            case EnemyState.DIE_FIRE:
+                break;
         }
     }
     
@@ -158,7 +175,7 @@ public class EnemyFSM1 : MonoBehaviour
     private void Attack()
     {
         if (PlayerInput.Instance.state == PlayerInput.PlayerState.DIE) return;
-        if (Vector3.Distance(transform.position, player.position) > attackRange)//현재 상태를 무브로 전환하기 (재추격)
+        if (Vector3.Distance(transform.position, player.position) > attackRange && isTypeSuicide==false)//현재 상태를 무브로 전환하기 (재추격)
         {
             state = EnemyState.MOVE;
             print("상태 전환 : Attack -> Move");
@@ -187,11 +204,19 @@ public class EnemyFSM1 : MonoBehaviour
     {
         //예외처리
         //피격 상태 이거나, 죽은 상태 일 때는 대미지 중첩으로 주지 않는다.
-        if (state != EnemyState.DAMAGED && state != EnemyState.DIE)
+        if (state != EnemyState.DAMAGED && state != EnemyState.DIE && state != EnemyState.DIE_FIRE)
         {
             //체력깎기
             print("좀비 공격당함");
             hp -= value;
+            timer = 0f;
+            if (PlayerInput.Instance.isEnchanted)
+            {
+                hitByFire = true;
+                //시꺼멓게 타는 마테리얼로 바꾸는 로직인데 작동을 안한다.
+                //bodyMaterial.GetComponent<SkinnedMeshRenderer>().materials[0] = body;
+                //bodyMaterial.GetComponent<SkinnedMeshRenderer>().materials[1] = body1;
+            }
 
             //몬스터의 체력이 1 이상이면 피격 상태
             if (hp > 0)
@@ -204,7 +229,6 @@ public class EnemyFSM1 : MonoBehaviour
                 state = EnemyState.DIE;
                 print("상태 전환 : AnyState -> Die");
                 anim.SetTrigger("Die");
-                Die();
             }
         }
     }
@@ -220,10 +244,22 @@ public class EnemyFSM1 : MonoBehaviour
 
     private void Die()
     {
-        print("적 사망!");
+        cc.enabled = false;
+        agent.enabled = false;
+        if (!hitByFire)
+        {
+            reviveTimer += Time.deltaTime;
+            if (reviveTimer > reviveTime)
+            {
+                state = EnemyState.REVIVE;
+                anim.SetTrigger("Revive");
+            }
+        }
+        else state = EnemyState.DIE_FIRE;
+        
         //진행 죽인 모든 코루틴은 정지한다
-        StopAllCoroutines();
-        StartCoroutine(DieProc());
+        //StopAllCoroutines();
+        //StartCoroutine(DieProc());
     }
 
     IEnumerator DieProc()
@@ -234,6 +270,18 @@ public class EnemyFSM1 : MonoBehaviour
         //2초 후에 자기 자신을 제거한다.
         yield return new WaitForSeconds(2.0f);
         print("적 사망!");
+    }
+
+    public void Revive()
+    {
+        cc.enabled = true;
+        agent.enabled = true;
+        canAttack = true;
+        timer = 0f;
+        reviveTimer = 0f;
+        hp = 100;
+        anim.SetTrigger("Idle");
+        state = EnemyState.IDLE;
     }
 
     private void OnDrawGizmos()
@@ -259,5 +307,24 @@ public class EnemyFSM1 : MonoBehaviour
     public void CannotAttack()
     {
         HitBox.canAttack = false;
+    }
+
+    public void Suicide()
+    {
+        GameObject explosion = Instantiate(explosionPrefab);
+        explosion.transform.position = this.transform.position;
+        explosion.transform.position += new Vector3(0, 0.2f, 0);
+        GameObject blood = Instantiate(bloodPrefab);
+        blood.transform.position = this.transform.position;
+        if(Vector3.Distance(this.transform.position,PlayerInput.Instance.transform.position) < 1.5f)
+        {
+            //충돌 시 방향 벡터 회전값
+            Vector3 normal = Vector3.Cross(this.transform.position, PlayerInput.Instance.transform.position);
+            Quaternion rot = Quaternion.FromToRotation(-Vector3.forward, normal);
+            PlayerInput.Instance.transform.rotation = rot;
+            PlayerInput.Instance.PlayerDamage(50, "KNOCKBACK");
+        }
+        Destroy(explosion, 1f);
+        this.gameObject.SetActive(false);
     }
 }
