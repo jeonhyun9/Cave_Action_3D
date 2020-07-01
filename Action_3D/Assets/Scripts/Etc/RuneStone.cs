@@ -22,26 +22,23 @@ public class RuneStone : MonoBehaviour
     }
     void Update()
     {
-        if (Vector3.Distance(transform.position, PlayerInput.Instance.transform.position) < 2f
-            && !fire.activeSelf)
-        {
-            PlayerInput.Instance.isFireLit = true;
-        }
-        else PlayerInput.Instance.isFireLit = false;
+        
         //플레이어가 캐스팅 중이면 실행
         if(PlayerInput.Instance.state == PlayerInput.PlayerState.END_CASTING && 
             Vector3.Distance(transform.position,PlayerInput.Instance.transform.position) < 2f)
         {
             if (!fire.activeSelf)
             {
-                PlayerInput.Instance.mana = 100;
+                fire.SetActive(true);
+                PlayerInput.Instance.PlusFireCap();
+                PlayerInput.Instance.mpPotionCap = 1;
+                PlayerInput.Instance.ManaRefill();
                 GameObject effect = Instantiate(fireEffect, this.transform);
                 effect.transform.position += new Vector3(0, 0.1f, 0);
                 Destroy(effect, 1f);
-                fire.SetActive(true);
                 floatingText.SetActive(true);
             }
-            
+            else PlayerInput.Instance.ManaRefill();
         }
 
         //텍스트 메쉬 프로의 투명도 증가

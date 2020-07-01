@@ -28,15 +28,24 @@ public class CamRotate : MonoBehaviour
     private void CameraRotate()
     {
         float h = playerInput.mouseX;
-        float v = playerInput.mouseY;
+        //float v = playerInput.mouseY;
+
+        float q = Input.GetAxis("Rotation");
 
         //마우스 입력이 있을때만 카메라 회전
-        if(h!= 0 && v!=0)
+        if(h!= 0)
         {
             angleX = h * speed * Time.deltaTime;
-            angleY = v * speed * Time.deltaTime;
+            //angleY = v * speed * Time.deltaTime;
             angleY = Mathf.Clamp(angleY, -60, 60);
             transform.eulerAngles += new Vector3(0, angleX, 0);
         }
-    }
+        
+        //if(Input.GetMouseButton(1)==false)
+        //{
+        //    angleX = q * speed * Time.deltaTime;
+        //    angleY = Mathf.Clamp(angleY, -60, 60);
+        //    transform.eulerAngles += new Vector3(0, angleX, 0);
+        //}
+    }   
 }

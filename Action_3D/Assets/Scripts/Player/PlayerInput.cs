@@ -44,7 +44,7 @@ public class PlayerInput : MonoBehaviour
     public string guardButtonName = "Guard";
     public string turnButtonName = "Turn";
     public string rollButtonName = "Roll";
-
+    
     public bool isFireLit = false;
     private PlayerMovement playerMovement;
     public GameObject sword;
@@ -56,28 +56,44 @@ public class PlayerInput : MonoBehaviour
     //불 파티클
     public GameObject enchant;
 
-    //피격 프리팹
-    public GameObject hitPrefab;
-    //기본 피격 이펙트
-    public GameObject normalHit;
-    //불 피격 이펙트
-    public GameObject FireHit;
-
+    //아이템 변수
+    [HideInInspector]
+    public int hpPotionCap;
+    [HideInInspector]
+    public int mpPotionCap;
+    [HideInInspector]
     public float hp = 100f;
+    [HideInInspector]
     public float stamina = 100f;
+    [HideInInspector]
     public float mana = 10f;
+
     public Slider hpSlider;
     public Slider staminaSlider;
     public Image manaImage;
+    public Image manaBackGround;
+    [HideInInspector]
     public bool isAttackEnd;
+    [HideInInspector]
     public bool isRollEnd;
     private bool isBackButtonInput = false;
+    [HideInInspector]
     public Vector3 dir;
+
+    //남은 마나게이지
+    [HideInInspector]
+    public int fireCapacity;
 
     //칼에 불 붙였는지 판별
     public bool isEnchanted = false;
 
+    //포션 파티클
+    public GameObject HpPotionParticle;
+    public GameObject MpPotionParticle;
+
     private TrailRenderer trailRenderer;
+    private int comboCount;
+    private bool isCanCombo = false;
    
 
     public enum PlayerState
@@ -89,6 +105,8 @@ public class PlayerInput : MonoBehaviour
         ROLL,
         START_CASTING,
         END_CASTING,
+        DRINK_HP,
+        DRINK_MP,
         HIT,
         KNOCKBACK,
         DIE,
@@ -101,6 +119,7 @@ public class PlayerInput : MonoBehaviour
     public float sideMove { get; private set; }
     public float mouseX { get; private set; }
     public float mouseY { get; private set; }
+
     public bool sideMoveTrigger { get; private set; }
     public bool attack { get; private set; }
     public bool guard { get; private set; }
@@ -113,7 +132,6 @@ public class PlayerInput : MonoBehaviour
         playerAnim = GetComponent<Animator>();
         playerMovement = GetComponent<PlayerMovement>();
         state = PlayerState.IDLE;
-        hitPrefab = normalHit;
         isAttackEnd = true;
         isRollEnd = true;
     }
@@ -122,22 +140,18 @@ public class PlayerInput : MonoBehaviour
     {
         hpSlider.value = hp / 100;
         staminaSlider.value = stamina / 100;
-        manaImage.fillAmount = mana / 100;
-
+        manaImage.fillAmount = mana / 400;
+        manaBackGround.fillAmount = fireCapacity / 4;
+        print(hp);
         //인챈트 중일 때는 마나가 감소
         if(isEnchanted)
         {
-            mana -= Time.deltaTime;
-            if(hitPrefab == normalHit)hitPrefab = FireHit;
-            if (mana < 2)
+            mana -= Time.deltaTime * 1;
+            if (mana < 1)
             {
                 isEnchanted = false;
                 enchant.SetActive(false);
             }
-        }
-        else if (hitPrefab == FireHit)
-        {
-            hitPrefab = normalHit;
         }
         //입력 감지
         if (state != PlayerState.HIT && state != PlayerState.DIE)
@@ -167,6 +181,24 @@ public class PlayerInput : MonoBehaviour
                 Attack();
             }
 
+            if(state == PlayerState.ATTACK && !isAttackEnd && isCanCombo && attack)
+            {
+                comboCount++;
+                isCanCombo = false;
+                switch (comboCount)
+                {
+                    case 1:
+                        AttackCombo1();
+                        break;
+                    case 2:
+                        AttackCombo2();
+                        break;
+                    case 3:
+                        StateToIdle();
+                        break;
+                }
+            }
+
             //구르기 애니메이션이 끝난 상태일 때 , 스페이스 클릭시 구르기
             if (roll && isRollEnd && stamina > 35)
             {
@@ -174,10 +206,28 @@ public class PlayerInput : MonoBehaviour
                 Roll();
             }
 
-            if (Input.GetKeyDown(KeyCode.F) && mana > 0)
+            if (Input.GetKeyDown(KeyCode.F))
             {
+                if (mana == 0) mana += 5;
                 playerAnim.SetTrigger("CASTING");
             }
+
+            if (Input.GetKeyDown(KeyCode.Tab) && isEnchanted)
+            {
+                playerAnim.SetTrigger("CASTINGOFF");
+            }
+
+            if (Input.GetKeyDown(KeyCode.F1) && hp < 100 && hpPotionCap > 0)
+            {
+                HpRecover();
+            }
+
+            if (Input.GetKeyDown(KeyCode.F2) && mana < fireCapacity * 100 && mpPotionCap > 0)
+            {
+                mpPotionCap--;
+                ManaRefill();
+            }
+
         }
 
         if(stamina < 100)
@@ -194,6 +244,18 @@ public class PlayerInput : MonoBehaviour
         else sideMoveTrigger = false;
 
     }
+
+    private void AttackCombo1()
+    {
+        sword.SetActive(false);
+        playerAnim.SetInteger("ATTACKNUM", 1);
+    }
+    private void AttackCombo2()
+    {
+        sword.SetActive(false);
+        playerAnim.SetInteger("ATTACKNUM", 2);
+    }
+
 
     private void Roll()
     {
@@ -254,6 +316,7 @@ public class PlayerInput : MonoBehaviour
     {
         state = PlayerState.IDLE;
         isAttackEnd = true;
+        isCanCombo = false;
         sword.SetActive(false);
     }
 
@@ -265,10 +328,10 @@ public class PlayerInput : MonoBehaviour
     private void Attack()
     {
         state = PlayerState.ATTACK;
-        int rand = UnityEngine.Random.Range(1, 3);
         isAttackEnd = false;
+        isCanCombo = false;
         playerAnim.SetTrigger("ATTACK");
-        playerAnim.SetInteger("ATTACKNUM", rand);
+        playerAnim.SetInteger("ATTACKNUM", 0);
     }
 
     public void SwordTrailOn()
@@ -279,36 +342,41 @@ public class PlayerInput : MonoBehaviour
     public void SwordTrailOff()
     {
         trail.SetActive(false);
+        isCanCombo = true;
     }
 
-    public void HitEnd()
+    public void StateToIdle()
     {
         state = PlayerState.IDLE;
         isAttackEnd = true;
+        isCanCombo = false;
+        comboCount = 0;
+        playerAnim.SetInteger("ATTACKNUM", 0);
         sword.SetActive(false);
-        print("피격애니메이션 종료");
+        SwordTrailOff();
+        print("플레이어 상태 : 아이들");
     }
 
     public void PlayerDamage(float value)
     {
-        //구르기일땐 피격 X
-        if (state != PlayerState.DIE && state != PlayerState.HIT && state != PlayerState.ROLL)
-        {
-            if (hp - value <= 0)
-            {
-                hp -= value;
-                state = PlayerState.DIE;
-                playerAnim.SetTrigger("DIE");
-                return;
-            }
-            else
-            {
-                hp -= value;
-                state = PlayerState.HIT;
-                playerAnim.SetTrigger("HIT");
-                print("플레이어의 현재 HP" + hp);
-            }
-        }
+       ////구르기일땐 피격 X
+       //if (state != PlayerState.DIE && state != PlayerState.HIT && state != PlayerState.ROLL)
+       //{
+       //    if (hp - value <= 0)
+       //    {
+       //        hp -= value;
+       //        state = PlayerState.DIE;
+       //        playerAnim.SetTrigger("DIE");
+       //        return;
+       //    }
+       //    else
+       //    {
+       //        hp -= value;
+       //        state = PlayerState.HIT;
+       //        playerAnim.SetTrigger("HIT");
+       //        print("플레이어의 현재 HP" + hp);
+       //    }
+       //}
     }
 
     public void PlayerDamage(float value, string trigger)
@@ -349,31 +417,54 @@ public class PlayerInput : MonoBehaviour
         state = PlayerState.IDLE;
     }
 
+    IEnumerator waitSecond()
+    {
+        yield return new WaitForSeconds(1f);
+    }
+
     private void Enchant()
     {
-        //인챈트 중이면 인챈트 끔
-        if (isEnchanted)
+        
+        isEnchanted = true;
+        trail = enchantTrail;
+        enchant.SetActive(true);
+        enchantIcon.SetActive(true);
+        normalIcon.SetActive(false);
+    }
+
+    private void EnchantOff()
+    {
+        isEnchanted = false;
+        trail = normalTrail;
+        enchant.SetActive(false);
+        enchantIcon.SetActive(false);
+        normalIcon.SetActive(true);
+    }
+
+    public void PlusFireCap()
+    {
+        fireCapacity++;
+    }
+
+    public void ManaRefill()
+    {
+        MpPotionParticle.SetActive(true);
+        print("마나 리필");
+        mana = fireCapacity * 100;
+    }
+
+    private void HpRecover()
+    {
+        hpPotionCap--;
+        HpPotionParticle.SetActive(true);
+        print("체력 리필");
+        if(hp + 30 <= 100)
         {
-            if(isFireLit)
-            {
-                //룬스톤이 주변에 있으면 인챈트 상태 유지
-                isFireLit = false;
-                return;
-            }
-            isEnchanted = false;
-            trail = normalTrail;
-            enchant.SetActive(false);
-            enchantIcon.SetActive(false);
-            normalIcon.SetActive(true);
+            hp += 30;
         }
-        //인챈트 중이 아니면 인챈트함
         else
         {
-            isEnchanted = true;
-            trail = enchantTrail;
-            enchant.SetActive(true);
-            enchantIcon.SetActive(true);
-            normalIcon.SetActive(false);
+            hp = 100;
         }
     }
 

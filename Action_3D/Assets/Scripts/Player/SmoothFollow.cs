@@ -31,14 +31,15 @@ namespace UnityStandardAssets.Utility
 			// Early out if we don't have a target
 			if (!target)
 				return;
-			if (PlayerInput.Instance.isRollEnd)
+			if (PlayerInput.Instance.state == PlayerInput.PlayerState.START_CASTING
+				&& PlayerInput.Instance.state == PlayerInput.PlayerState.END_CASTING
+				&& PlayerInput.Instance.state == PlayerInput.PlayerState.HIT
+				&& PlayerInput.Instance.state == PlayerInput.PlayerState.DIE
+				&& PlayerInput.Instance.state == PlayerInput.PlayerState.ROLL)
 			{
-				rotationDamping = 3f;
-			}
-			else
-            {
 				rotationDamping = 0.1f;
             }
+			else { rotationDamping = 3f; }
 			// Calculate the current rotation angles
 
 			var wantedRotationAngle = target.eulerAngles.y;
