@@ -25,7 +25,6 @@ public class PotionIcon : MonoBehaviour
         if (isHp)
         {
             value = PlayerInput.Instance.hpPotionCap;
-            print(value);
         }
         else
         {

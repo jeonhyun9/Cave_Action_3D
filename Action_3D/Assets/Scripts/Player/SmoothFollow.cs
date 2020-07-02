@@ -32,14 +32,14 @@ namespace UnityStandardAssets.Utility
 			if (!target)
 				return;
 			if (PlayerInput.Instance.state == PlayerInput.PlayerState.START_CASTING
-				&& PlayerInput.Instance.state == PlayerInput.PlayerState.END_CASTING
-				&& PlayerInput.Instance.state == PlayerInput.PlayerState.HIT
-				&& PlayerInput.Instance.state == PlayerInput.PlayerState.DIE
-				&& PlayerInput.Instance.state == PlayerInput.PlayerState.ROLL)
+				|| PlayerInput.Instance.state == PlayerInput.PlayerState.END_CASTING
+				|| PlayerInput.Instance.state == PlayerInput.PlayerState.HIT
+				|| PlayerInput.Instance.state == PlayerInput.PlayerState.DIE
+				|| PlayerInput.Instance.state == PlayerInput.PlayerState.ROLL)
 			{
-				rotationDamping = 0.1f;
+				rotationDamping = 0f;
             }
-			else { rotationDamping = 3f; }
+			else{ rotationDamping = 3f; }
 			// Calculate the current rotation angles
 
 			var wantedRotationAngle = target.eulerAngles.y;

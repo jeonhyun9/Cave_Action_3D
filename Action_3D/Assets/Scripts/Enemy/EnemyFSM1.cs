@@ -265,11 +265,8 @@ public class EnemyFSM1 : MonoBehaviour
             if (hp > 0)
             {
                 //중간 보스일 경우 피격모션이 없기 때문에 0.5초간 무적 판정만 준다.
-                if(isTypeMiniBoss)
-                {
-                    StartCoroutine(Wait());
-                }
-                else
+                StartCoroutine(Wait(state));
+                if (!isTypeMiniBoss)
                 {
                     anim.SetTrigger("Damaged");
                 }
@@ -400,10 +397,23 @@ public class EnemyFSM1 : MonoBehaviour
         this.gameObject.SetActive(false);
     }
 
-    IEnumerator Wait()
+    IEnumerator Wait(EnemyState _state)
     {
-        yield return new WaitForSeconds(0.5f);
+        state = EnemyState.DAMAGED;
+        yield return new WaitForSeconds(0.2f);
+        if(_state == EnemyState.ATTACK)
+        {
+            timer = 2f;
+            state = EnemyState.ATTACK;
+            print("상태 전환 : Move -> Attack");
+           
+        }
+        else if (_state == EnemyState.MOVE)
+        {
+            timer = 0f;
+            state = EnemyState.MOVE;
+            print("상태 전환 : Attack -> Move");
+            if (!isTypeMiniBoss)anim.SetTrigger("Move");           
+        }
     }
-
-    
 }

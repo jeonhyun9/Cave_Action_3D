@@ -10,9 +10,11 @@ public class Sword : MonoBehaviour
     {
         if (PlayerInput.Instance.state == PlayerInput.PlayerState.ATTACK)
         {
+            int damage = 80;
+            if (PlayerInput.Instance.isEnchanted) damage += 20;
             if (other.gameObject.layer == LayerMask.NameToLayer("ENEMY"))
             {
-                other.transform.GetComponent<EnemyFSM1>().HitDamage(100,this.transform.position);
+                other.transform.GetComponent<EnemyFSM1>().HitDamage(damage,this.transform.position);
             }
         }
     }

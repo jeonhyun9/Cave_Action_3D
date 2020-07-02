@@ -2020,7 +2020,7 @@ MonoBehaviour:
   attackRange: 1
   moveRange: 30
   HitBox: {fileID: 5509164158312106819}
-  hp: 500
+  hp: 800
 --- !u!1 &8245731870897555802
 GameObject:
   m_ObjectHideFlags: 0

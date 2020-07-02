@@ -94,6 +94,7 @@ public class PlayerInput : MonoBehaviour
     private TrailRenderer trailRenderer;
     private int comboCount;
     private bool isCanCombo = false;
+    private int staminaRecoverValue = 5;
    
 
     public enum PlayerState
@@ -135,6 +136,8 @@ public class PlayerInput : MonoBehaviour
         isAttackEnd = true;
         isRollEnd = true;
     }
+
+
     // Update is called once per frame
     void Update()
     {
@@ -142,7 +145,6 @@ public class PlayerInput : MonoBehaviour
         staminaSlider.value = stamina / 100;
         manaImage.fillAmount = mana / 400;
         manaBackGround.fillAmount = fireCapacity / 4;
-        print(hp);
         //인챈트 중일 때는 마나가 감소
         if(isEnchanted)
         {
@@ -175,9 +177,9 @@ public class PlayerInput : MonoBehaviour
             }
 
             //공격 애니메이션이 끝난 상태일 때, 왼클릭 시 공격
-            if (attack && isAttackEnd && stamina > 1)
+            if (attack && isAttackEnd && stamina > 5)
             {
-                stamina -= 1;
+                stamina -= 5;
                 Attack();
             }
 
@@ -188,10 +190,21 @@ public class PlayerInput : MonoBehaviour
                 switch (comboCount)
                 {
                     case 1:
-                        AttackCombo1();
+                        if(stamina - 5 > 0)
+                        {
+                            stamina -= 5;
+                            AttackCombo1();
+                        }
+                        else StateToIdle();
+
                         break;
                     case 2:
-                        AttackCombo2();
+                        if (stamina - 10 > 0)
+                        {
+                            stamina -= 10;
+                            AttackCombo2();
+                        }
+                        else StateToIdle();
                         break;
                     case 3:
                         StateToIdle();
@@ -200,7 +213,7 @@ public class PlayerInput : MonoBehaviour
             }
 
             //구르기 애니메이션이 끝난 상태일 때 , 스페이스 클릭시 구르기
-            if (roll && isRollEnd && stamina > 35)
+            if (roll && isRollEnd && stamina > 30)
             {
                 stamina -= 35;
                 Roll();
@@ -228,12 +241,11 @@ public class PlayerInput : MonoBehaviour
                 ManaRefill();
             }
 
-        }
-
-        if(stamina < 100)
-        {
-            if(state == PlayerState.MOVE || state == PlayerState.IDLE)
-            stamina += 1 * Time.deltaTime;
+            if (stamina + staminaRecoverValue < 100)
+            {
+                if (state == PlayerState.MOVE || state == PlayerState.IDLE)
+                    stamina += staminaRecoverValue * Time.deltaTime;
+            }
         }
 
         //옆으로 이동 중인지 판별한다.
@@ -285,11 +297,13 @@ public class PlayerInput : MonoBehaviour
         }
         if (sideMove > 0 && move < 0)
         {
-            transform.forward = (-transform.forward) - transform.right;
+            isBackButtonInput = true;
+            transform.forward = -(-transform.forward -(transform.right));
         }
         if (sideMove < 0 && move < 0)
         {
-            transform.forward = (-transform.forward) - (-transform.right);
+            isBackButtonInput = true;
+            transform.forward = -(-transform.forward -(-transform.right));
         }
         if (isBackButtonInput) playerAnim.SetBool("ISBACKTURN", true);
         playerAnim.SetTrigger("ROLL");
@@ -302,6 +316,7 @@ public class PlayerInput : MonoBehaviour
         {
             isRollEnd = true;
         }
+        StateToIdle();
     }
 
     public void TurnEnd()
@@ -309,7 +324,7 @@ public class PlayerInput : MonoBehaviour
         //transform.forward *= -1;
         isRollEnd = true;
         playerAnim.SetBool("ISBACKTURN", false);
-        state = PlayerState.IDLE;
+        StateToIdle();
     }
 
     public void AttackEnd()
@@ -359,24 +374,24 @@ public class PlayerInput : MonoBehaviour
 
     public void PlayerDamage(float value)
     {
-       ////구르기일땐 피격 X
-       //if (state != PlayerState.DIE && state != PlayerState.HIT && state != PlayerState.ROLL)
-       //{
-       //    if (hp - value <= 0)
-       //    {
-       //        hp -= value;
-       //        state = PlayerState.DIE;
-       //        playerAnim.SetTrigger("DIE");
-       //        return;
-       //    }
-       //    else
-       //    {
-       //        hp -= value;
-       //        state = PlayerState.HIT;
-       //        playerAnim.SetTrigger("HIT");
-       //        print("플레이어의 현재 HP" + hp);
-       //    }
-       //}
+       //구르기일땐 피격 X
+       if (state != PlayerState.DIE && state != PlayerState.HIT && state != PlayerState.ROLL)
+       {
+           if (hp - value <= 0)
+           {
+               hp -= value;
+               state = PlayerState.DIE;
+               playerAnim.SetTrigger("DIE");
+               return;
+           }
+           else
+           {
+               hp -= value;
+               state = PlayerState.HIT;
+               playerAnim.SetTrigger("HIT");
+               print("플레이어의 현재 HP" + hp);
+           }
+       }
     }
 
     public void PlayerDamage(float value, string trigger)
@@ -424,7 +439,6 @@ public class PlayerInput : MonoBehaviour
 
     private void Enchant()
     {
-        
         isEnchanted = true;
         trail = enchantTrail;
         enchant.SetActive(true);
