@@ -10,6 +10,7 @@ public class OpenStone : MonoBehaviour
     public GameObject floatingText;
     public GameObject fireEffect;
     public GameObject door;
+    public GameObject doorSound;
     private TextMeshProUGUI textMeshPro;
     private byte alpha;
     private Color targetColor;
@@ -44,7 +45,6 @@ public class OpenStone : MonoBehaviour
                 fire.SetActive(true);
                 floatingText.SetActive(true);
             }
-            
         }
 
         //텍스트 메쉬 프로의 투명도 증가
@@ -75,6 +75,10 @@ public class OpenStone : MonoBehaviour
 
         if (doorOpenTrigger)
         {
+            if(doorSound.activeSelf==false)
+            {
+                doorSound.SetActive(true);
+            }
             door.transform.eulerAngles += new Vector3(0, 0.25f, 0);
             if(door.transform.eulerAngles.y > 140)
             {

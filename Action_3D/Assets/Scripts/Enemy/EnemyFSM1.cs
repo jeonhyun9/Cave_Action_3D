@@ -1,18 +1,13 @@
 ﻿//using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics.Eventing.Reader;
-using System.Text;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.UIElements;
 
 //몬스터 유한 상태 머신
 public class EnemyFSM1 : MonoBehaviour
 {
     //몬스터 상태 ENUM
-    enum EnemyState
+    public enum EnemyState
     {
         IDLE,
         MOVE,
@@ -28,13 +23,15 @@ public class EnemyFSM1 : MonoBehaviour
     //애니메이션을 제어하기 위한 애니메이터 컴포넌트
     Animator anim;
 
-    EnemyState state; //몬스터 상태 변수
+    public EnemyState state { get; private set; }//몬스터 상태 변수
     #region "자살 좀비"
     //자살 좀비일 경우
     public bool isTypeSuicide = false;
     public GameObject explosionPrefab;
     public GameObject bloodPrefab;
     public GameObject waringLight;
+    public GameObject moveSound;
+    public AudioClip suicideSound;
     #endregion
 
     #region "중간 보스"
@@ -109,13 +106,14 @@ public class EnemyFSM1 : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
     }
 
-    private void FixedUpdate()
-    {
-        
-    }
     // Update is called once per frame
     void Update()
     {
+        if (state == EnemyState.MOVE && Time.timeScale == 1)
+        {
+            moveSound.SetActive(true);
+        }
+        else moveSound.SetActive(false);
         //OnDrawGizmos();
         //상태에 따른 행동 처리
         switch (state)
@@ -201,6 +199,7 @@ public class EnemyFSM1 : MonoBehaviour
             {
                 //일정 시간마다 플레이어를 공겨하기
                 attackAnimEnd = false;
+                agent.SetDestination(player.transform.position);
                 int rand = Random.Range(0, 2);
                 anim.SetInteger("ATTACKNUM", rand);
                 print("어택넘" + rand);
@@ -215,7 +214,7 @@ public class EnemyFSM1 : MonoBehaviour
     }
 
     //플레이어 쪽에서 충돌 감지를 할 수 있으니 이 함수는 퍼블릭으로 만들자.
-    public void HitDamage(int value, Vector3 swordPos)
+    public void HitDamage(Vector3 pos , Vector3 normal , int value)
     {
         //예외처리
         //피격 상태 이거나, 죽은 상태 일 때는 대미지 중첩으로 주지 않는다.
@@ -226,11 +225,27 @@ public class EnemyFSM1 : MonoBehaviour
             hp -= value;
             timer = 0f;
             attackAnimEnd = true;
-            Vector3 pos = hitPoint.transform.position;
-            Vector3 _normal = Vector3.Cross(hitPoint.transform.position, swordPos);
-            //충돌 시 방향 벡터 회전값
-            Quaternion rot = Quaternion.FromToRotation(-Vector3.forward, _normal);
 
+            //몬스터의 체력이 1 이상이면 피격 상태
+            if (hp > 0)
+            {
+                //중간 보스일 경우 피격모션이 없기 때문에 0.5초간 무적 판정만 준다.
+                if (!isTypeMiniBoss)
+                {
+                    anim.SetTrigger("Damaged");
+                }
+                StartCoroutine(Wait(state));
+            }
+            //0 이하이면 죽음 상태
+            else
+            {
+                state = EnemyState.DIE;
+                print("상태 전환 : AnyState -> Die");
+                anim.SetTrigger("Die");
+            }
+
+            pos = hitPoint.transform.position;
+            Quaternion rot = Quaternion.FromToRotation(-Vector3.forward, normal);
             //혈흔 효과 생성 오브젝트 풀링
             if (PlayerInput.Instance.isEnchanted)
             {
@@ -261,15 +276,35 @@ public class EnemyFSM1 : MonoBehaviour
                 //bodyMaterial.GetComponent<SkinnedMeshRenderer>().materials[1] = body1;
             }
 
+           
+        }
+    }
+
+    public void HitDamage(int value,bool isFire)
+    {
+        if (state != EnemyState.DAMAGED && state != EnemyState.DIE && state != EnemyState.DIE_FIRE)
+        {
+            if(isTypeSuicide)
+            {
+                Suicide();
+                return;
+            }
+            //체력깎기
+            print("좀비 공격당함");
+            hp -= value;
+            timer = 0f;
+            attackAnimEnd = true;
+            hitByFire = isFire;
+
             //몬스터의 체력이 1 이상이면 피격 상태
             if (hp > 0)
             {
                 //중간 보스일 경우 피격모션이 없기 때문에 0.5초간 무적 판정만 준다.
-                StartCoroutine(Wait(state));
                 if (!isTypeMiniBoss)
                 {
                     anim.SetTrigger("Damaged");
                 }
+                StartCoroutine(Wait(state));
             }
             //0 이하이면 죽음 상태
             else
@@ -292,7 +327,7 @@ public class EnemyFSM1 : MonoBehaviour
 
     private void Die()
     {
-
+        HitBox.gameObject.SetActive(false);
         agent.enabled = false;
         if (!hitByFire)
         {
@@ -305,9 +340,11 @@ public class EnemyFSM1 : MonoBehaviour
         }
         else
         {
+            //불에 타죽었을 때, 일정확률로 포션 획득
             state = EnemyState.DIE_FIRE;
+            PlayerInput.Instance.killCount++;
             //체력 흡수 
-            int rand = Random.Range(0, 10);
+            int rand = Random.Range(0, 7);
             if (rand == 7)
             {
                 PlayerInput.Instance.hpPotionCap++;
@@ -385,15 +422,15 @@ public class EnemyFSM1 : MonoBehaviour
         explosion.transform.position += new Vector3(0, 0.2f, 0);
         GameObject blood = Instantiate(bloodPrefab);
         blood.transform.position = this.transform.position;
-        if(Vector3.Distance(this.transform.position,PlayerInput.Instance.transform.position) < 1.5f)
+        if(Vector3.Distance(this.transform.position,PlayerInput.Instance.transform.position) < 2f)
         {
             //충돌 시 방향 벡터 회전값
-            Vector3 normal = Vector3.Cross(this.transform.position, PlayerInput.Instance.transform.position);
-            Quaternion rot = Quaternion.FromToRotation(-Vector3.forward, normal);
-            PlayerInput.Instance.transform.rotation = rot;
+            //Vector3 normal = Vector3.Cross(this.transform.position, PlayerInput.Instance.transform.position);
+            //Quaternion rot = Quaternion.FromToRotation(-Vector3.forward, normal);
             PlayerInput.Instance.PlayerDamage(50, "KNOCKBACK");
         }
-        Destroy(explosion, 1f);
+        Destroy(explosion, 3f);
+        PlayerInput.Instance.killCount++;
         this.gameObject.SetActive(false);
     }
 
@@ -416,4 +453,5 @@ public class EnemyFSM1 : MonoBehaviour
             if (!isTypeMiniBoss)anim.SetTrigger("Move");           
         }
     }
+
 }

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Configuration;
-using UnityEditor.Animations;
+﻿using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,7 +13,6 @@ public class PlayerInput : MonoBehaviour
         if(null == instance)
         {
             instance = this;
-            DontDestroyOnLoad(this.gameObject);
         }
         else
         {
@@ -41,11 +37,38 @@ public class PlayerInput : MonoBehaviour
     public string moveAxisName = "Vertical";
     public string sideMoveAxisName = "Horizontal";
     public string attackButtonName = "Attack";
-    public string guardButtonName = "Guard";
     public string turnButtonName = "Turn";
     public string rollButtonName = "Roll";
-    
+
+    //점수
+    public int killCount;
+    public float timeCount = 0.00f;
+    private float timer = 0f;
+    public int totalScore;
+    public bool bossClear = false;
+    public GameObject scorePanel;
+    public TextMeshProUGUI textMeshPro;
+    public GameObject newRecordTab;
+    public GameObject clearTab;
+    public GameObject escPanel;
+    public GameObject youDiedTab;
+
+    //마법
+    public Image fireBallProgress;
+    public Image fireWallProgress;
+    public GameObject fireBallGenPoint;
+    public GameObject fireWallGenPoint;
+    public float fireBallCoolTime = 10.0f;
+    public float fireWallCoolTime = 60.0f;
+
+    //사운드
+    public bool isMeetBoss = false;
+    public GameObject caveMusic;
+    public AudioClip[] playerSound;
+    private AudioSource audioSource;
+
     public bool isFireLit = false;
+    public bool isSwordOn = true;
     private PlayerMovement playerMovement;
     public GameObject sword;
     public GameObject trail;
@@ -95,14 +118,13 @@ public class PlayerInput : MonoBehaviour
     private int comboCount;
     private bool isCanCombo = false;
     private int staminaRecoverValue = 5;
+    private Quaternion orgRotation;
    
-
     public enum PlayerState
     {
         IDLE,
         MOVE,
         ATTACK,
-        GUARD,
         ROLL,
         START_CASTING,
         END_CASTING,
@@ -110,6 +132,9 @@ public class PlayerInput : MonoBehaviour
         DRINK_MP,
         HIT,
         KNOCKBACK,
+        DODGE,
+        POWERATTACK,
+        JUMP,
         DIE,
     }
 
@@ -123,28 +148,134 @@ public class PlayerInput : MonoBehaviour
 
     public bool sideMoveTrigger { get; private set; }
     public bool attack { get; private set; }
-    public bool guard { get; private set; }
     public bool turn { get; private set; }
     public bool roll { get; private set; }
 
     private void Start()
     {
+        Cursor.visible = false;                     //마우스 커서가 보이지 않게 함
+        Cursor.lockState = CursorLockMode.Locked;   //마우스 커서를 고정시킴
+        audioSource = GetComponent<AudioSource>();
         trail = normalTrail;
         playerAnim = GetComponent<Animator>();
         playerMovement = GetComponent<PlayerMovement>();
         state = PlayerState.IDLE;
         isAttackEnd = true;
         isRollEnd = true;
+        fireBallProgress.transform.gameObject.SetActive(false);
+        fireWallProgress.transform.gameObject.SetActive(false);
     }
 
 
     // Update is called once per frame
     void Update()
     {
+        //이에스시 누르면 정지
+        if (escPanel.activeSelf)
+        {
+            Time.timeScale = 0;
+        }
+        else Time.timeScale = 1;
+
+        if(Input.GetKeyDown(KeyCode.Escape))
+        {
+            EscPanelSwitch();
+        }
+
+        if (state == PlayerState.DIE)
+        {
+            timer += Time.deltaTime * 1;
+        }
+
+        if (!bossClear)
+        {
+            timeCount += Time.deltaTime * 1.00f;
+        }
+        else
+        {
+            timer += Time.deltaTime * 1;
+        }
+
+        if (timer > 3 && state == PlayerState.DIE)
+        {
+            escPanel.SetActive(true);
+            youDiedTab.SetActive(true);
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+
+        //불 킨 수에 따라 마법 해제
+        if(fireCapacity > 0 && fireBallProgress.gameObject.activeSelf==false)
+        {
+            fireBallProgress.gameObject.SetActive(true);
+        }
+
+        if (fireCapacity > 1 && fireWallProgress.gameObject.activeSelf == false)
+        {
+            fireWallProgress.gameObject.SetActive(true);
+        }
+
+        if (bossClear && scorePanel.activeSelf==false && timer > 4)
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+            state = PlayerState.DIE;
+            scorePanel.SetActive(true);
+            totalScore = (killCount * 1000) + (int)(10000.00f / timeCount);
+            if(GameManager.instance.gameData.TotalScore < totalScore)
+            {
+                newRecordTab.SetActive(true);
+                textMeshPro.text = "Clear Time - " + timeCount + "\r\n" +
+                                   "Kill Count - " + killCount + "\r\n" +
+                                   "New Top Score - " + totalScore + "\r\n" +
+                                   "Pre Top Score - " + GameManager.instance.gameData.TotalScore + "\r\n";
+
+                GameManager.instance.gameData.TotalScore = totalScore;
+                GameManager.instance.gameData.TimeCount = (int)timeCount;
+                GameManager.instance.gameData.killCount = killCount;
+                GameManager.instance.SaveGameData();
+            }
+            else
+            {
+                clearTab.SetActive(true);
+                textMeshPro.text = "Clear Time - " + timeCount + "\r\n" +
+                                  "Kill Count - " + killCount + "\r\n" +
+                                  "Total Score - " + totalScore + "\r\n" +
+                                  "Top Record - " + GameManager.instance.gameData.TotalScore + "\r\n";
+            }
+        }
+        //브금 재생
+        if(isMeetBoss)
+        {
+            caveMusic.SetActive(false);
+        }
+
+        //이미지 필어마운트
         hpSlider.value = hp / 100;
         staminaSlider.value = stamina / 100;
         manaImage.fillAmount = mana / 400;
         manaBackGround.fillAmount = fireCapacity / 4;
+
+        if(fireBallProgress.gameObject.activeSelf)
+        {
+            fireBallProgress.fillAmount = fireBallCoolTime / 10f;
+        }
+        if(fireWallProgress.gameObject.activeSelf)
+        {
+            fireWallProgress.fillAmount = fireWallCoolTime / 60f;
+        }
+       
+        if(fireBallCoolTime < 10)
+        {
+            fireBallCoolTime += Time.deltaTime;
+        }
+
+        if(fireWallCoolTime < 60)
+        {
+            fireWallCoolTime += Time.deltaTime;
+        }
+
+
         //인챈트 중일 때는 마나가 감소
         if(isEnchanted)
         {
@@ -161,7 +292,6 @@ public class PlayerInput : MonoBehaviour
             move = Input.GetAxis(moveAxisName);
             sideMove = Input.GetAxis(sideMoveAxisName);
             attack = Input.GetButton(attackButtonName);
-            guard = Input.GetButtonDown(guardButtonName);
             turn = Input.GetButton(turnButtonName);
             roll = Input.GetButton(rollButtonName);
 
@@ -169,7 +299,7 @@ public class PlayerInput : MonoBehaviour
             mouseY = Input.GetAxis("Mouse Y");
             //안맞을 때 실행
             if (move == 0 && sideMove == 0 && isAttackEnd == true && isRollEnd == true
-                && state != PlayerState.START_CASTING && state != PlayerState.END_CASTING)
+                && state != PlayerState.START_CASTING && state != PlayerState.END_CASTING && state != PlayerState.ATTACK && state != PlayerState.JUMP)
             {
                 //if(isBackButtonInput) transform.forward *= -1;
                 isBackButtonInput = false;
@@ -177,7 +307,7 @@ public class PlayerInput : MonoBehaviour
             }
 
             //공격 애니메이션이 끝난 상태일 때, 왼클릭 시 공격
-            if (attack && isAttackEnd && stamina > 5)
+            if (attack && isAttackEnd && stamina > 5 && state != PlayerState.ROLL)
             {
                 stamina -= 5;
                 Attack();
@@ -213,41 +343,95 @@ public class PlayerInput : MonoBehaviour
             }
 
             //구르기 애니메이션이 끝난 상태일 때 , 스페이스 클릭시 구르기
-            if (roll && isRollEnd && stamina > 30)
+            if (Input.GetKeyDown(KeyCode.LeftShift) && isRollEnd && stamina > 30 && state != PlayerState.ATTACK)
             {
-                stamina -= 35;
+                stamina -= 30;
+                audioSource.PlayOneShot(playerSound[0], 0.6f);
                 Roll();
             }
 
+            //불켜기
             if (Input.GetKeyDown(KeyCode.F))
             {
                 if (mana == 0) mana += 5;
                 playerAnim.SetTrigger("CASTING");
             }
 
+            //불끄기
             if (Input.GetKeyDown(KeyCode.Tab) && isEnchanted)
             {
                 playerAnim.SetTrigger("CASTINGOFF");
             }
 
+            //체력회복
             if (Input.GetKeyDown(KeyCode.F1) && hp < 100 && hpPotionCap > 0)
             {
                 HpRecover();
             }
 
+            //마나회복
             if (Input.GetKeyDown(KeyCode.F2) && mana < fireCapacity * 100 && mpPotionCap > 0)
             {
                 mpPotionCap--;
                 ManaRefill();
             }
 
-            if (stamina + staminaRecoverValue < 100)
+            //회피
+            if (Input.GetKeyDown(KeyCode.LeftAlt) &&state != PlayerState.ATTACK
+                && state != PlayerState.ROLL
+                && stamina > 15)
             {
-                if (state == PlayerState.MOVE || state == PlayerState.IDLE)
-                    stamina += staminaRecoverValue * Time.deltaTime;
+                stamina -= 15;
+                audioSource.PlayOneShot(playerSound[0], 0.6f);
+                playerAnim.SetTrigger("DODGE");
+                state = PlayerState.ROLL;
+            }
+
+            //점프
+            if (Input.GetKeyDown(KeyCode.Space) && state != PlayerState.ATTACK
+                && state != PlayerState.ROLL
+                && stamina > 15)
+            {
+                stamina -= 15;
+                audioSource.PlayOneShot(playerSound[0], 0.6f);
+                playerAnim.SetTrigger("JUMP");
+                state = PlayerState.JUMP;
+            }
+
+            //강공격
+            if (Input.GetMouseButtonDown(1) && isAttackEnd && stamina > 10 && state != PlayerState.ROLL)
+            {
+                stamina -= 10;
+                state = PlayerState.ATTACK;
+                isAttackEnd = false;
+                isCanCombo = false;
+                playerAnim.SetTrigger("POWERATTACK");
+            }
+
+            //파이어 볼
+            if (Input.GetKeyDown(KeyCode.G) && isAttackEnd && mana > 0 && state != PlayerState.ROLL
+                && fireBallCoolTime == 10)
+            {
+                mana -= 20;
+                fireBallCoolTime = 0;
+                playerAnim.SetTrigger("FIREBALL");
+            }
+
+            //파이어 월
+            if (Input.GetKeyDown(KeyCode.H) && isAttackEnd && mana > 0 && state != PlayerState.ROLL
+                && fireWallCoolTime == 60)
+            {
+                mana -= 50;
+                fireWallCoolTime = 0;
+                playerAnim.SetTrigger("CASTINGWALL");
+            }
+
+            //스태미너 회복
+            if (state == PlayerState.MOVE || state == PlayerState.IDLE && stamina + staminaRecoverValue < 100)
+            {
+                stamina += staminaRecoverValue * Time.deltaTime;
             }
         }
-
         //옆으로 이동 중인지 판별한다.
         if (sideMove != 0 && move == 0)
         {
@@ -259,11 +443,13 @@ public class PlayerInput : MonoBehaviour
 
     private void AttackCombo1()
     {
+        isSwordOn = false;
         sword.SetActive(false);
         playerAnim.SetInteger("ATTACKNUM", 1);
     }
     private void AttackCombo2()
     {
+        isSwordOn = false;
         sword.SetActive(false);
         playerAnim.SetInteger("ATTACKNUM", 2);
     }
@@ -274,37 +460,49 @@ public class PlayerInput : MonoBehaviour
         #region "구르기 로직"
         state = PlayerState.ROLL;
         isRollEnd = false;
-        if(sideMove > 0)
-        {
-            transform.forward = transform.right;
-        }
-        if(sideMove > 0 && move > 0)
-        {
-            transform.forward = transform.forward - transform.right;
-        }
-        if(sideMove < 0)
-        {
-            transform.forward = -transform.right;
-        }
-        if(sideMove < 0 && move > 0)
-        {
-            transform.forward = transform.forward - (-transform.right);
-        }
-        if(move < 0 && sideMove == 0)
+
+        if (move < 0)
         {
             isBackButtonInput = true;
             transform.forward *= -1;
         }
-        if (sideMove > 0 && move < 0)
+        else if (move == 0)
         {
-            isBackButtonInput = true;
-            transform.forward = -(-transform.forward -(transform.right));
+            if (sideMove > 0)
+            {
+                //오른쪽 구르기
+                transform.forward = transform.right;
+            }
+            else if (sideMove < 0)
+            {
+                //왼 구르기
+                transform.forward = -transform.right;
+            }
         }
-        if (sideMove < 0 && move < 0)
+        else if (move > 0)
         {
-            isBackButtonInput = true;
-            transform.forward = -(-transform.forward -(-transform.right));
-        }
+            if (sideMove > 0)
+            {
+                //왼 대각 구르기
+                transform.forward = transform.forward - (-transform.right);
+                
+            }
+            else if (sideMove < 0)
+            {
+                //오른 대각 구르기
+                transform.forward = transform.forward - transform.right;
+            }
+        } 
+        //if (sideMove > 0 && move < 0)
+        //{
+        //    isBackButtonInput = true;
+        //    transform.forward = -(-transform.forward -(transform.right));
+        //}
+        //if (sideMove < 0 && move < 0)
+        //{
+        //    isBackButtonInput = true;
+        //    transform.forward = -(-transform.forward -(-transform.right));
+        //}
         if (isBackButtonInput) playerAnim.SetBool("ISBACKTURN", true);
         playerAnim.SetTrigger("ROLL");
         #endregion
@@ -332,12 +530,15 @@ public class PlayerInput : MonoBehaviour
         state = PlayerState.IDLE;
         isAttackEnd = true;
         isCanCombo = false;
+        isSwordOn = false;
         sword.SetActive(false);
     }
 
     public void SwordColliderOn()
     {
+        isSwordOn = true;
         sword.SetActive(true);
+        print("현재 상태" + state);
     }
 
     private void Attack()
@@ -351,6 +552,7 @@ public class PlayerInput : MonoBehaviour
 
     public void SwordTrailOn()
     {
+        audioSource.PlayOneShot(playerSound[Random.Range(3, 6)], 1.0f);
         trail.SetActive(true);
     }
 
@@ -363,10 +565,14 @@ public class PlayerInput : MonoBehaviour
     public void StateToIdle()
     {
         state = PlayerState.IDLE;
+        transform.rotation = orgRotation;
         isAttackEnd = true;
         isCanCombo = false;
+        isRollEnd = true;
         comboCount = 0;
+        playerAnim.SetBool("ISBACKTURN", false);
         playerAnim.SetInteger("ATTACKNUM", 0);
+        isSwordOn = false;
         sword.SetActive(false);
         SwordTrailOff();
         print("플레이어 상태 : 아이들");
@@ -374,42 +580,48 @@ public class PlayerInput : MonoBehaviour
 
     public void PlayerDamage(float value)
     {
-       //구르기일땐 피격 X
-       if (state != PlayerState.DIE && state != PlayerState.HIT && state != PlayerState.ROLL)
-       {
-           if (hp - value <= 0)
-           {
-               hp -= value;
-               state = PlayerState.DIE;
-               playerAnim.SetTrigger("DIE");
-               return;
-           }
-           else
-           {
-               hp -= value;
-               state = PlayerState.HIT;
-               playerAnim.SetTrigger("HIT");
-               print("플레이어의 현재 HP" + hp);
-           }
-       }
-    }
-
-    public void PlayerDamage(float value, string trigger)
-    {
-        if (state != PlayerState.DIE && state != PlayerState.HIT && state != PlayerState.ROLL)
+        //구르기일땐 피격 X
+        if (state != PlayerState.DIE && state != PlayerState.HIT && state != PlayerState.ROLL && state != PlayerState.DODGE)
         {
             if (hp - value <= 0)
             {
                 hp -= value;
                 state = PlayerState.DIE;
                 playerAnim.SetTrigger("DIE");
+                hpSlider.transform.gameObject.SetActive(false);
                 return;
             }
             else
             {
                 hp -= value;
                 state = PlayerState.HIT;
-                playerAnim.SetTrigger(trigger);
+                audioSource.PlayOneShot(playerSound[1], 1.2f);
+                playerAnim.SetTrigger("HIT");
+                print("플레이어의 현재 HP" + hp);
+            }
+        }
+    }
+
+    public void PlayerDamage(float value, string key)
+    {
+        if (state != PlayerState.DIE && state != PlayerState.HIT && state != PlayerState.ROLL && state != PlayerState.DODGE)
+        {
+            //orgRotation = transform.rotation;
+            //transform.rotation = rot;
+            if (hp - value <= 0)
+            {
+                hp -= value;
+                state = PlayerState.DIE;
+                playerAnim.SetTrigger("DIE");
+                hpSlider.transform.gameObject.SetActive(false);
+                return;
+            }
+            else
+            {
+                hp -= value;
+                state = PlayerState.HIT;
+                playerAnim.SetTrigger("KNOCKBACK");
+                audioSource.PlayOneShot(playerSound[2], 1f);
                 print("플레이어의 현재 HP" + hp);
             }
         }
@@ -482,4 +694,46 @@ public class PlayerInput : MonoBehaviour
         }
     }
 
+    public void PlayAirSound()
+    {
+        audioSource.PlayOneShot(playerSound[0], 0.6f);
+    }
+
+    public void EscPanelSwitch()
+    {
+        if (escPanel.activeSelf == false)
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+            escPanel.SetActive(true);
+        }
+        else
+        {
+            Cursor.visible = false;                     //마우스 커서가 보이지 않게 함
+            Cursor.lockState = CursorLockMode.Locked;   //마우스 커서를 고정시킴
+            escPanel.SetActive(false);
+        }
+    }
+
+    public void GenarateFireball()
+    {
+        var _fireball = PoolingManager.Instance.GetFireball();
+        if (_fireball != null)
+        {
+            _fireball.transform.position = fireBallGenPoint.transform.position;
+            _fireball.transform.forward = this.transform.forward;
+            _fireball.SetActive(true);
+        }
+    }
+
+    public void GenerateFireWall()
+    {
+        var _fireWall = PoolingManager.Instance.GetFireWall();
+        if (_fireWall != null)
+        {
+            _fireWall.transform.position = this.transform.position;
+            //_fireWall.transform.forward = this.transform.forward;
+            _fireWall.SetActive(true);
+        }
+    }
 }

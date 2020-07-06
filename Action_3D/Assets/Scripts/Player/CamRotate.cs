@@ -33,7 +33,7 @@ public class CamRotate : MonoBehaviour
         float q = Input.GetAxis("Rotation");
 
         //마우스 입력이 있을때만 카메라 회전
-        if(h!= 0)
+        if(h!= 0&& PlayerInput.Instance.state != PlayerInput.PlayerState.HIT)
         {
             angleX = h * speed * Time.deltaTime;
             //angleY = v * speed * Time.deltaTime;

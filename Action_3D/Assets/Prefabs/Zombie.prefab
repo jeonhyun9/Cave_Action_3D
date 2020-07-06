@@ -2058,6 +2058,7 @@ Transform:
   - {fileID: 4565301432713117166}
   - {fileID: 2966675479931184473}
   - {fileID: 542482032144918953}
+  - {fileID: 895097122913821978}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2128,6 +2129,8 @@ MonoBehaviour:
   explosionPrefab: {fileID: 0}
   bloodPrefab: {fileID: 0}
   waringLight: {fileID: 0}
+  moveSound: {fileID: 2280370169134175465}
+  suicideSound: {fileID: 0}
   isTypeMiniBoss: 0
   reviveTime: 10
   hitByFire: 0
@@ -2146,7 +2149,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 7939914044882214775}
   m_Enabled: 1
   m_AgentTypeID: 0
-  m_Radius: 0.5
+  m_Radius: 0.2
   m_Speed: 2.5
   m_Acceleration: 5
   avoidancePriority: 50
@@ -2392,3 +2395,89 @@ Transform:
   m_Father: {fileID: 8882497980489276910}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 29.247356, y: -2.803168, z: -5.8799343}
+--- !u!1001 &3143031139558130670
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 7312699473361536461}
+    m_Modifications:
+    - target: {fileID: 2878446934532171508, guid: 6741faf37325f9f4a84f0655f83769e0,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2878446934532171508, guid: 6741faf37325f9f4a84f0655f83769e0,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2878446934532171508, guid: 6741faf37325f9f4a84f0655f83769e0,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2878446934532171508, guid: 6741faf37325f9f4a84f0655f83769e0,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2878446934532171508, guid: 6741faf37325f9f4a84f0655f83769e0,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2878446934532171508, guid: 6741faf37325f9f4a84f0655f83769e0,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2878446934532171508, guid: 6741faf37325f9f4a84f0655f83769e0,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2878446934532171508, guid: 6741faf37325f9f4a84f0655f83769e0,
+        type: 3}
+      propertyPath: m_RootOrder
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2878446934532171508, guid: 6741faf37325f9f4a84f0655f83769e0,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2878446934532171508, guid: 6741faf37325f9f4a84f0655f83769e0,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2878446934532171508, guid: 6741faf37325f9f4a84f0655f83769e0,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3763824826712151815, guid: 6741faf37325f9f4a84f0655f83769e0,
+        type: 3}
+      propertyPath: m_Name
+      value: ZombieMoveSound
+      objectReference: {fileID: 0}
+    - target: {fileID: 3763824826712151815, guid: 6741faf37325f9f4a84f0655f83769e0,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 6741faf37325f9f4a84f0655f83769e0, type: 3}
+--- !u!1 &2280370169134175465 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3763824826712151815, guid: 6741faf37325f9f4a84f0655f83769e0,
+    type: 3}
+  m_PrefabInstance: {fileID: 3143031139558130670}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &895097122913821978 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2878446934532171508, guid: 6741faf37325f9f4a84f0655f83769e0,
+    type: 3}
+  m_PrefabInstance: {fileID: 3143031139558130670}
+  m_PrefabAsset: {fileID: 0}

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor.Rendering;
+﻿using System.Collections;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -9,6 +6,8 @@ public class PlayerMovement : MonoBehaviour
     public float moveSpeed = 5f;
     public float sideMoveSpeed = 4f;
     public float rotateSpeed = 180f;
+    //사운드
+    public GameObject runSound;
 
     private bool isRollMove = false;
     private PlayerInput playerInput;
@@ -40,19 +39,13 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
-        if(playerInput.state == PlayerInput.PlayerState.MOVE)
+        if (playerInput.state == PlayerInput.PlayerState.MOVE)
         {
+            runSound.SetActive(true);
             MoveSide();
             MoveForward();
         }
-
-        if(playerInput.guard)
-        {
-            if(playerInput.state != PlayerInput.PlayerState.ROLL || playerInput.state != PlayerInput.PlayerState.ATTACK)
-            {
-                playerInput.state = PlayerInput.PlayerState.GUARD;           
-            }
-        }
+        else runSound.SetActive(false);
 
         if(playerInput.state == PlayerInput.PlayerState.ROLL && isRollMove)
         {
@@ -101,13 +94,15 @@ public class PlayerMovement : MonoBehaviour
         //playerRigidbody.MovePosition(playerRigidbody.position + moveDistance);
     }
 
-    public void RollMoveSwitch()
+ 
+    public void RollMoveOn()
     {
-        if (isRollMove)
-        {
-            isRollMove = false;
-        }
-        else isRollMove = true;
+        isRollMove = true;
+    }
+
+    public void RollMoveOff()
+    {
+        isRollMove = false;
     }
 
     IEnumerator TurnLogic()
