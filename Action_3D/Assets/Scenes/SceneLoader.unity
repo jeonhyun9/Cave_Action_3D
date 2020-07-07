@@ -337,7 +337,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fadeCg: {fileID: 748687514}
-  fadeDuration: 1
+  fadeDuration: 2
 --- !u!4 &1096027297
 Transform:
   m_ObjectHideFlags: 0

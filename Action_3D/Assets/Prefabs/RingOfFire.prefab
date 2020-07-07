@@ -9666,8 +9666,8 @@ Light:
   m_Type: 2
   m_Shape: 0
   m_Color: {r: 1, g: 0.38056105, b: 0, a: 1}
-  m_Intensity: 2
-  m_Range: 5
+  m_Intensity: 3
+  m_Range: 8
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -19117,6 +19117,20 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     vectorLabel1_3: W
+--- !u!114 &3135219604712415873
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4757911201494542990}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bca5a29d0ab067468dee2817e7a943f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sound: {fileID: 8300000, guid: 0f0c8772d1a9c25479dfd7972e3090ef, type: 3}
+  volume: 1
 --- !u!1001 &2992912709479896685
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19247,8 +19261,15 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 11400000, guid: b822ce823bfc9e24286213f1c2158aed, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: b822ce823bfc9e24286213f1c2158aed, type: 3}
+--- !u!1 &4757911201494542990 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 100016, guid: b822ce823bfc9e24286213f1c2158aed,
+    type: 3}
+  m_PrefabInstance: {fileID: 4757911201494510654}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &4757911201494120110 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400016, guid: b822ce823bfc9e24286213f1c2158aed,

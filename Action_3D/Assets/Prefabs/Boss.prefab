@@ -1368,7 +1368,7 @@ NavMeshAgent:
   m_Speed: 2.5
   m_Acceleration: 5
   avoidancePriority: 50
-  m_AngularSpeed: 300
+  m_AngularSpeed: 330
   m_StoppingDistance: 1
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 0
@@ -1395,6 +1395,7 @@ MonoBehaviour:
   bossHpPanel: {fileID: 0}
   hitPoint: {fileID: 516152254666938822}
   bossMusic: {fileID: 5763050193873146851}
+  bossMoveSound: {fileID: 0}
   bossSoundClip:
   - {fileID: 8300000, guid: a733cc98115f35640b8bc15c02e7414c, type: 3}
   hpBar: {fileID: 0}

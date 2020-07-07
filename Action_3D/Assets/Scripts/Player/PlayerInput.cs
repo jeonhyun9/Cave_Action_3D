@@ -117,7 +117,7 @@ public class PlayerInput : MonoBehaviour
     private TrailRenderer trailRenderer;
     private int comboCount;
     private bool isCanCombo = false;
-    private int staminaRecoverValue = 5;
+    private int staminaRecoverValue = 10;
     private Quaternion orgRotation;
    
     public enum PlayerState
@@ -171,11 +171,11 @@ public class PlayerInput : MonoBehaviour
     void Update()
     {
         //이에스시 누르면 정지
-        if (escPanel.activeSelf)
-        {
-            Time.timeScale = 0;
-        }
-        else Time.timeScale = 1;
+        //if (escPanel.activeSelf)
+        //{
+        //    Time.timeScale = 0;
+        //}
+        //else Time.timeScale = 1;
 
         if(Input.GetKeyDown(KeyCode.Escape))
         {
@@ -215,11 +215,11 @@ public class PlayerInput : MonoBehaviour
             fireWallProgress.gameObject.SetActive(true);
         }
 
-        if (bossClear && scorePanel.activeSelf==false && timer > 4)
+        //클리어시 플레이어 점수 표시
+        if (bossClear && scorePanel.activeSelf==false && timer > 7)
         {
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
-            state = PlayerState.DIE;
             scorePanel.SetActive(true);
             totalScore = (killCount * 1000) + (int)(10000.00f / timeCount);
             if(GameManager.instance.gameData.TotalScore < totalScore)
@@ -282,10 +282,10 @@ public class PlayerInput : MonoBehaviour
             mana -= Time.deltaTime * 1;
             if (mana < 1)
             {
-                isEnchanted = false;
-                enchant.SetActive(false);
+                EnchantOff();
             }
         }
+
         //입력 감지
         if (state != PlayerState.HIT && state != PlayerState.DIE)
         {
@@ -297,6 +297,7 @@ public class PlayerInput : MonoBehaviour
 
             mouseX = Input.GetAxis("Mouse X");
             mouseY = Input.GetAxis("Mouse Y");
+
             //안맞을 때 실행
             if (move == 0 && sideMove == 0 && isAttackEnd == true && isRollEnd == true
                 && state != PlayerState.START_CASTING && state != PlayerState.END_CASTING && state != PlayerState.ATTACK && state != PlayerState.JUMP)
@@ -313,6 +314,7 @@ public class PlayerInput : MonoBehaviour
                 Attack();
             }
 
+            //콤보 공격
             if(state == PlayerState.ATTACK && !isAttackEnd && isCanCombo && attack)
             {
                 comboCount++;
@@ -377,7 +379,7 @@ public class PlayerInput : MonoBehaviour
             }
 
             //회피
-            if (Input.GetKeyDown(KeyCode.LeftAlt) &&state != PlayerState.ATTACK
+            if (Input.GetKeyDown(KeyCode.LeftAlt)
                 && state != PlayerState.ROLL
                 && stamina > 15)
             {
@@ -388,7 +390,7 @@ public class PlayerInput : MonoBehaviour
             }
 
             //점프
-            if (Input.GetKeyDown(KeyCode.Space) && state != PlayerState.ATTACK
+            if (Input.GetKeyDown(KeyCode.Space)
                 && state != PlayerState.ROLL
                 && stamina > 15)
             {
@@ -396,6 +398,13 @@ public class PlayerInput : MonoBehaviour
                 audioSource.PlayOneShot(playerSound[0], 0.6f);
                 playerAnim.SetTrigger("JUMP");
                 state = PlayerState.JUMP;
+            }
+
+            //턴
+            if (Input.GetKeyDown(KeyCode.V) && state != PlayerState.ATTACK
+                && state != PlayerState.ROLL)
+            {
+                playerAnim.SetTrigger("TURN");
             }
 
             //강공격
@@ -409,17 +418,17 @@ public class PlayerInput : MonoBehaviour
             }
 
             //파이어 볼
-            if (Input.GetKeyDown(KeyCode.G) && isAttackEnd && mana > 0 && state != PlayerState.ROLL
-                && fireBallCoolTime == 10)
+            if (Input.GetKeyDown(KeyCode.G) && isAttackEnd && mana > 10 && state != PlayerState.ROLL
+                && fireBallCoolTime >= 10)
             {
-                mana -= 20;
+                mana -= 10;
                 fireBallCoolTime = 0;
                 playerAnim.SetTrigger("FIREBALL");
             }
 
             //파이어 월
-            if (Input.GetKeyDown(KeyCode.H) && isAttackEnd && mana > 0 && state != PlayerState.ROLL
-                && fireWallCoolTime == 60)
+            if (Input.GetKeyDown(KeyCode.H) && isAttackEnd && mana > 50 && state != PlayerState.ROLL
+                && fireWallCoolTime >= 50)
             {
                 mana -= 50;
                 fireWallCoolTime = 0;
@@ -427,8 +436,9 @@ public class PlayerInput : MonoBehaviour
             }
 
             //스태미너 회복
-            if (state == PlayerState.MOVE || state == PlayerState.IDLE && stamina + staminaRecoverValue < 100)
+            if (state == PlayerState.MOVE || state == PlayerState.IDLE)
             {
+                if (stamina > 100) stamina = 100;
                 stamina += staminaRecoverValue * Time.deltaTime;
             }
         }
@@ -585,7 +595,7 @@ public class PlayerInput : MonoBehaviour
         {
             if (hp - value <= 0)
             {
-                hp -= value;
+                //hp -= value;
                 state = PlayerState.DIE;
                 playerAnim.SetTrigger("DIE");
                 hpSlider.transform.gameObject.SetActive(false);
@@ -593,7 +603,7 @@ public class PlayerInput : MonoBehaviour
             }
             else
             {
-                hp -= value;
+                //hp -= value;
                 state = PlayerState.HIT;
                 audioSource.PlayOneShot(playerSound[1], 1.2f);
                 playerAnim.SetTrigger("HIT");
@@ -610,7 +620,7 @@ public class PlayerInput : MonoBehaviour
             //transform.rotation = rot;
             if (hp - value <= 0)
             {
-                hp -= value;
+                //hp -= value;
                 state = PlayerState.DIE;
                 playerAnim.SetTrigger("DIE");
                 hpSlider.transform.gameObject.SetActive(false);
@@ -618,7 +628,7 @@ public class PlayerInput : MonoBehaviour
             }
             else
             {
-                hp -= value;
+                //hp -= value;
                 state = PlayerState.HIT;
                 playerAnim.SetTrigger("KNOCKBACK");
                 audioSource.PlayOneShot(playerSound[2], 1f);
@@ -720,6 +730,7 @@ public class PlayerInput : MonoBehaviour
         var _fireball = PoolingManager.Instance.GetFireball();
         if (_fireball != null)
         {
+            _fireball.transform.rotation = Quaternion.identity;
             _fireball.transform.position = fireBallGenPoint.transform.position;
             _fireball.transform.forward = this.transform.forward;
             _fireball.SetActive(true);

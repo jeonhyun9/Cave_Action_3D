@@ -5,7 +5,7 @@ using UnityEngine;
 public class EnemyHitBox : MonoBehaviour
 {
     public bool canAttack;
-  
+   
     private void OnTriggerEnter(Collider other)
     {
         if (other.name.Contains("Player") && canAttack == true)

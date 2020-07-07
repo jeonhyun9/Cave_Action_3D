@@ -33,7 +33,7 @@ public class Sword : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (PlayerInput.Instance.isEnchanted) damage = 100 + (PlayerInput.Instance.fireCapacity * 10);
-        else damage = 100;
+        else damage = 80;
         if (PlayerInput.Instance.state == PlayerInput.PlayerState.ATTACK)
         {
             if (other.gameObject.layer == LayerMask.NameToLayer("ENEMY"))

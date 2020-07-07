@@ -62,6 +62,7 @@ public class EnemyFSM1 : MonoBehaviour
     public float reviveTime = 5.0f;
     public bool hitByFire = false;
     public GameObject hitPoint;
+    public GameObject dieSound;
     #endregion
 
     #region "IDLE 상태에 필요한 변수들"
@@ -78,11 +79,12 @@ public class EnemyFSM1 : MonoBehaviour
 
     public EnemyHitBox HitBox;
 
+    //공격 사운드
+    public GameObject randomAttackSound;
+
     //몬스터 일반 변수
     public int hp = 100;
-    int att = 5;
-    float speed = 0.5f;
-    float offset;
+
     //공격 딜레이
     float attTime = 2f; //2초에 한번 공격
     float timer = 0f;   //타이머
@@ -104,6 +106,7 @@ public class EnemyFSM1 : MonoBehaviour
         //랜덤 값 지정
         transform.eulerAngles = new Vector3(0, UnityEngine.Random.Range(0, 360), 0);
         agent = GetComponent<NavMeshAgent>();
+        
     }
 
     // Update is called once per frame
@@ -183,6 +186,10 @@ public class EnemyFSM1 : MonoBehaviour
 
     private void Attack()
     {
+        if (isTypeMiniBoss)
+        {
+            agent.SetDestination(player.transform.position);
+        }
         if (PlayerInput.Instance.state == PlayerInput.PlayerState.DIE) return;
         if (Vector3.Distance(transform.position, player.position) > attackRange && isTypeSuicide==false && attackAnimEnd)//현재 상태를 무브로 전환하기 (재추격)
         {
@@ -199,7 +206,6 @@ public class EnemyFSM1 : MonoBehaviour
             {
                 //일정 시간마다 플레이어를 공겨하기
                 attackAnimEnd = false;
-                agent.SetDestination(player.transform.position);
                 int rand = Random.Range(0, 2);
                 anim.SetInteger("ATTACKNUM", rand);
                 print("어택넘" + rand);
@@ -213,13 +219,14 @@ public class EnemyFSM1 : MonoBehaviour
         }
     }
 
-    //플레이어 쪽에서 충돌 감지를 할 수 있으니 이 함수는 퍼블릭으로 만들자.
     public void HitDamage(Vector3 pos , Vector3 normal , int value)
     {
         //예외처리
         //피격 상태 이거나, 죽은 상태 일 때는 대미지 중첩으로 주지 않는다.
-        if (state != EnemyState.DAMAGED && state != EnemyState.DIE && state != EnemyState.DIE_FIRE)
+        if (state != EnemyState.DAMAGED && state != EnemyState.DIE && state != EnemyState.DIE_FIRE && state != EnemyState.REVIVE)
         {
+            EnemyState tempState = state;
+            if (!isTypeMiniBoss) state = EnemyState.DAMAGED;
             //체력깎기
             print("좀비 공격당함");
             hp -= value;
@@ -229,12 +236,13 @@ public class EnemyFSM1 : MonoBehaviour
             //몬스터의 체력이 1 이상이면 피격 상태
             if (hp > 0)
             {
-                //중간 보스일 경우 피격모션이 없기 때문에 0.5초간 무적 판정만 준다.
+                //중간 보스가 아닐 경우 애니메이션 트리거
                 if (!isTypeMiniBoss)
                 {
                     anim.SetTrigger("Damaged");
                 }
-                StartCoroutine(Wait(state));
+                else StartCoroutine(Wait(tempState));
+                //StartCoroutine(Wait(tempState));
             }
             //0 이하이면 죽음 상태
             else
@@ -282,9 +290,11 @@ public class EnemyFSM1 : MonoBehaviour
 
     public void HitDamage(int value,bool isFire)
     {
-        if (state != EnemyState.DAMAGED && state != EnemyState.DIE && state != EnemyState.DIE_FIRE)
+        if (state != EnemyState.DAMAGED && state != EnemyState.DIE && state != EnemyState.DIE_FIRE && state != EnemyState.REVIVE)
         {
-            if(isTypeSuicide)
+            EnemyState tempState = state;
+            if(!isTypeMiniBoss)state = EnemyState.DAMAGED;
+            if (isTypeSuicide)
             {
                 Suicide();
                 return;
@@ -299,12 +309,13 @@ public class EnemyFSM1 : MonoBehaviour
             //몬스터의 체력이 1 이상이면 피격 상태
             if (hp > 0)
             {
-                //중간 보스일 경우 피격모션이 없기 때문에 0.5초간 무적 판정만 준다.
+                //중간 보스가 아닐 경우 애니메이션 트리거
                 if (!isTypeMiniBoss)
                 {
                     anim.SetTrigger("Damaged");
                 }
-                StartCoroutine(Wait(state));
+                else StartCoroutine(Wait(tempState));
+                //StartCoroutine(Wait(tempState));
             }
             //0 이하이면 죽음 상태
             else
@@ -327,6 +338,10 @@ public class EnemyFSM1 : MonoBehaviour
 
     private void Die()
     {
+        if(dieSound.activeSelf==false)
+        {
+            dieSound.SetActive(true);
+        }
         HitBox.gameObject.SetActive(false);
         agent.enabled = false;
         if (!hitByFire)
@@ -344,7 +359,7 @@ public class EnemyFSM1 : MonoBehaviour
             state = EnemyState.DIE_FIRE;
             PlayerInput.Instance.killCount++;
             //체력 흡수 
-            int rand = Random.Range(0, 7);
+            int rand = Random.Range(0, 8);
             if (rand == 7)
             {
                 PlayerInput.Instance.hpPotionCap++;
@@ -380,6 +395,7 @@ public class EnemyFSM1 : MonoBehaviour
 
     public void Revive()
     {
+        dieSound.SetActive(false);
         agent.enabled = true;
         canAttack = true;
         timer = 0f;
@@ -407,12 +423,14 @@ public class EnemyFSM1 : MonoBehaviour
     public void CanAttack()
     {
         HitBox.canAttack = true;
+        randomAttackSound.SetActive(true);
     }
 
     public void CannotAttack()
     {
         HitBox.canAttack = false;
         attackAnimEnd = true;
+        randomAttackSound.SetActive(false);
     }
 
     public void Suicide()
@@ -434,23 +452,42 @@ public class EnemyFSM1 : MonoBehaviour
         this.gameObject.SetActive(false);
     }
 
+    public void HitStateEnd()
+    {
+        if(timer == 0)
+        {
+            timer = 0f;
+            randomAttackSound.SetActive(false);
+            state = EnemyState.MOVE;
+            print("상태 전환 : Attack -> Move");
+            if (!isTypeMiniBoss) anim.SetTrigger("Move");
+        }
+        else
+        {
+            timer = 2f;
+            randomAttackSound.SetActive(false);
+            state = EnemyState.ATTACK;
+            print("상태 전환 : Move -> Attack");
+        }
+    }
+
     IEnumerator Wait(EnemyState _state)
     {
         state = EnemyState.DAMAGED;
-        yield return new WaitForSeconds(0.2f);
-        if(_state == EnemyState.ATTACK)
+        yield return new WaitForSeconds(0.4f);
+        if (_state == EnemyState.ATTACK)
         {
             timer = 2f;
             state = EnemyState.ATTACK;
             print("상태 전환 : Move -> Attack");
-           
+
         }
         else if (_state == EnemyState.MOVE)
         {
             timer = 0f;
             state = EnemyState.MOVE;
             print("상태 전환 : Attack -> Move");
-            if (!isTypeMiniBoss)anim.SetTrigger("Move");           
+            if (!isTypeMiniBoss) anim.SetTrigger("Move");
         }
     }
 

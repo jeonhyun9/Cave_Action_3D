@@ -37,8 +37,10 @@ public class OpenStone : MonoBehaviour
         {
             if (!fire.activeSelf)
             {
-                PlayerInput.Instance.mana = 100;
                 doorOpenTrigger = true;
+                PlayerInput.Instance.PlusFireCap();
+                PlayerInput.Instance.mpPotionCap = 1;
+                PlayerInput.Instance.ManaRefill();
                 GameObject effect = Instantiate(fireEffect, this.transform);
                 effect.transform.position += new Vector3(0, 0.1f, 0);
                 Destroy(effect, 1f);

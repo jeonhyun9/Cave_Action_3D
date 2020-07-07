@@ -41,14 +41,12 @@ public class BossFSM : MonoBehaviour
 
     BossState state;
     float hp = 3000;
-    float speed;
     float attackRange = 1.5f;
     float findRange = 5f;
     bool isCanJump = false;
     bool isCanHit = true;
     bool isStompCanHit = false;
     private float stompRange = 5f;
-    private float jumpAttackStompRange = 3f;
    
     // Start is called before the first frame update
     void Start()
@@ -67,7 +65,7 @@ public class BossFSM : MonoBehaviour
     {
         if(bossHpPanel.activeSelf)
         {
-            hpBar.fillAmount = hp / 2000;
+            hpBar.fillAmount = hp / 3000;
         }
         if (state == BossState.MOVE && Time.timeScale == 1)
         {
@@ -226,7 +224,24 @@ public class BossFSM : MonoBehaviour
 
     private void Punch()
     {
-       
+        if (Vector3.Distance(transform.position, playerTr.position) <= attackRange)//공격 범위 안에 들어옴
+        {
+            Vector3 direction = playerTr.position - this.transform.position;
+            float angle = Vector3.Angle(direction, this.transform.forward);
+            Debug.Log(angle);
+            //일정 각도 안에 있을 때만 패턴 실행
+            if (angle < 30)
+            {
+                state = BossState.PUNCH;
+                bossAnim.SetTrigger("PUNCH");
+            }
+            else
+            {
+                Debug.Log("Out");
+                state = BossState.TURN;
+                bossAnim.SetTrigger("TURN");
+            }
+        }
     }
 
     private void JumpAttack()
@@ -262,6 +277,7 @@ public class BossFSM : MonoBehaviour
     {
         bossHitbox.SetActive(false);
         bossHpPanel.SetActive(false);
+        bossAgent.enabled = false;
         if(PlayerInput.Instance.bossClear==false)
         {
             PlayerInput.Instance.bossClear = true;
@@ -470,13 +486,13 @@ public class BossFSM : MonoBehaviour
     public void PlayScreamSound()
     {
         //비명 사운드 출력
-        audioSource.PlayOneShot(bossSoundClip[0], 0.8f);
+        audioSource.PlayOneShot(bossSoundClip[0], 0.6f);
     }
 
     public void PlaySpraySound()
     {
         //피 토하는 사운드 출력
-        audioSource.PlayOneShot(bossSoundClip[2], 3f);
+        audioSource.PlayOneShot(bossSoundClip[2], 2f);
     }
 
     public void PlaySwingSound()

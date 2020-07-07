@@ -18566,7 +18566,8 @@ PrefabInstance:
       propertyPath: InitialModule.startSize.scalar
       value: 2
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 11400000, guid: dd95958724fe7d04f8dd14f41446741f, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: dd95958724fe7d04f8dd14f41446741f, type: 3}
 --- !u!4 &7430507047528447647 stripped
 Transform:

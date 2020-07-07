@@ -22,7 +22,6 @@ public class RuneStone : MonoBehaviour
     }
     void Update()
     {
-        
         //플레이어가 캐스팅 중이면 실행
         if(PlayerInput.Instance.state == PlayerInput.PlayerState.END_CASTING && 
             Vector3.Distance(transform.position,PlayerInput.Instance.transform.position) < 2f)
@@ -45,7 +44,7 @@ public class RuneStone : MonoBehaviour
         if (fire.activeSelf && alpha + 1 < 255 && isFloating == false)
         {
             alpha += 1;
-            targetColor = new Color32(255, 133, 0, alpha);
+            targetColor = new Color32(255, 133, 0, 254);
             textMeshPro.color = targetColor;
         }
         //글씨가 완전히 나타난 후 3초를 센다.
