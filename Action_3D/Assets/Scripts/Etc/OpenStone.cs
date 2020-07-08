@@ -17,6 +17,7 @@ public class OpenStone : MonoBehaviour
     private bool isFloating = false;
     private float floatingTimer;
     private bool doorOpenTrigger = false;
+    private bool doorCloseTrigger = false;
     // Update is called once per frame
     private void Start()
     {
@@ -25,6 +26,11 @@ public class OpenStone : MonoBehaviour
     }
     void Update()
     {
+        if (PlayerInput.Instance.isMeetBoss && doorSound.activeSelf == false)
+        {
+            doorCloseTrigger = true;
+        }
+
         if (Vector3.Distance(transform.position, PlayerInput.Instance.transform.position) < 2f
             && !fire.activeSelf)
         {
@@ -75,6 +81,7 @@ public class OpenStone : MonoBehaviour
             textMeshPro.color = targetColor;
         }
 
+        //문 닫기
         if (doorOpenTrigger)
         {
             if(doorSound.activeSelf==false)
@@ -85,6 +92,23 @@ public class OpenStone : MonoBehaviour
             if(door.transform.eulerAngles.y > 140)
             {
                 doorOpenTrigger = false;
+                doorSound.SetActive(false);
+            }
+        }
+
+        //문 열기 (보스 조우시 문이 닫힘)
+        if (doorCloseTrigger)
+        {
+            //문 닫는 로직 중지
+            doorOpenTrigger = false;
+            if (doorSound.activeSelf == false)
+            {
+                doorSound.SetActive(true);
+            }
+            door.transform.eulerAngles -= new Vector3(0, 0.25f, 0);
+            if (door.transform.eulerAngles.y <= 0)
+            {
+                doorCloseTrigger = false;
             }
         }
     }

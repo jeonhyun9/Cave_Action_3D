@@ -11,17 +11,25 @@ public class BossFSM : MonoBehaviour
         IDLE,
         MOVE,
         PATTERN_CHOICE,
-        BITE,
         TURN,
         SCREAM,
         PUNCH,
         JUMP,
         JUMP_ATTACK,
+        PRE_BREATH,
         BREATH,
+        SUMMON,
         DIE,
     }
 
-    #region "컴포넌트"
+    //자살 좀비를 소환할 위치 + 거리값 가진 구조체
+    public struct GenPoint
+    {
+        public Transform transform;
+        public float distance;
+    }
+
+    #region "보스 컴포넌트"
     public GameObject bossHitbox;
     public GameObject bloodSpray;
     public GameObject stomp;
@@ -30,6 +38,8 @@ public class BossFSM : MonoBehaviour
     public GameObject bossMusic;
     public GameObject bossMoveSound;
     public AudioClip[] bossSoundClip;
+    public GenPoint[] genPoint = new GenPoint[4];
+    public GameObject suicideZombiePrefab;
     public Image hpBar;
     Animator bossAnim;
     NavMeshAgent bossAgent;
@@ -39,6 +49,7 @@ public class BossFSM : MonoBehaviour
     AudioSource bossBgmSource;
     #endregion
 
+    #region "보스 스탯 + 상태 변수"
     BossState state;
     float hp = 3000;
     float attackRange = 1.5f;
@@ -46,8 +57,10 @@ public class BossFSM : MonoBehaviour
     bool isCanJump = false;
     bool isCanHit = true;
     bool isStompCanHit = false;
+    bool isFirstPattern = true;
     private float stompRange = 5f;
-   
+    #endregion
+
     // Start is called before the first frame update
     void Start()
     {
@@ -58,6 +71,12 @@ public class BossFSM : MonoBehaviour
         cc = GetComponent<CharacterController>();
         audioSource = GetComponent<AudioSource>();
         bossBgmSource = bossMusic.transform.GetComponent<AudioSource>();
+
+        //자살 좀비를 소환할 위치들의 트랜스폼을 가져온다.
+        for (int i = 0; i < genPoint.Length; i++)
+        {
+            genPoint[i].transform = GameObject.Find("GenPoint" + i.ToString()).transform;
+        }
     }
 
     // Update is called once per frame
@@ -83,9 +102,6 @@ public class BossFSM : MonoBehaviour
             case BossState.MOVE:
                 Move();
                 break;
-            case BossState.BITE:
-                Bite();
-                break;
             case BossState.SCREAM:
                 Scream();
                 break;
@@ -107,32 +123,21 @@ public class BossFSM : MonoBehaviour
             case BossState.TURN:
                 Turn();
                 break;
+            case BossState.SUMMON:
+                //소환 로직은 애니메이션 이벤트에서 실행
+                break;
+            case BossState.PRE_BREATH:
+                Pre_Breath();
+                break;
         }
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, 2.5f);
-    }
-
-    private void Jump()
-    {
-        if (PlayerInput.Instance.state == PlayerInput.PlayerState.JUMP) return;
-        if (stomp.activeSelf && isStompCanHit)
-        {
-            float distanceToPlayer = (playerTr.position - this.transform.position).sqrMagnitude;
-            if (distanceToPlayer < stompRange)
-            {
-                playerTr.GetComponent<PlayerInput>().PlayerDamage(30, "KNOCKBACK");
-            }
-        }
-    }
+   
 
     private void Idle()
     {
         //플레이어 조우
-        if(Vector3.Distance(transform.position, playerTr.position) < findRange
+        if (Vector3.Distance(transform.position, playerTr.position) < findRange
             && PlayerInput.Instance.state != PlayerInput.PlayerState.DIE)
         {
             state = BossState.PATTERN_CHOICE;
@@ -144,8 +149,19 @@ public class BossFSM : MonoBehaviour
 
     private void PatternChoice()
     {
-        int pattern = UnityEngine.Random.Range(0, 5);
-        print("패턴번호" + pattern);
+        int pattern = 0;
+        //랜덤 패턴 실행
+        if (isFirstPattern)
+        {
+            //첫패턴은 비명 - > 점프 공격
+            isFirstPattern = false;
+            pattern = 2;
+        }
+        else
+        {
+            pattern = UnityEngine.Random.Range(0, 7);
+            print("패턴번호" + pattern);
+        }
         switch (pattern)
         {
             case 0:
@@ -157,37 +173,80 @@ public class BossFSM : MonoBehaviour
                     //일정 각도 안에 있을 때만 패턴 실행
                     if (angle < 30)
                     {
-                        state = BossState.PUNCH;
-                        bossAnim.SetTrigger("PUNCH");
+                        StateChange("PUNCH");
                     }
                     else
                     {
-                        Debug.Log("Out");
-                        state = BossState.TURN;
-                        bossAnim.SetTrigger("TURN");
+                        //Debug.Log("플레이어가 보스 각도에서 벗어나 있음.");
+                        StateChange("TURN");
                     }
                 }
                 else
                 {
-                    state = BossState.MOVE;
-                    bossAnim.SetTrigger("MOVE");
+                    StateChange("MOVE");
                 }
                 break;
             case 1:
-                state = BossState.JUMP;
-                bossAnim.SetTrigger("JUMP");
+                StateChange("JUMP");
                 break;
             case 2:
                 StateChange("SCREAM");
                 break;
             case 3:
-                bossAgent.SetDestination(playerTr.position);
-                state = BossState.BREATH;
-                bossAnim.SetTrigger("BREATH");
+                state = BossState.PRE_BREATH;
+                bossAnim.SetTrigger("PRE_BREATH");
                 break;
             case 4:
                 StateChange("MOVE");
                 break;
+            case 5:
+                if(suicideZombiePrefab.activeSelf)
+                {
+                    StateChange("TURN");
+                }
+                else StateChange("SUMMON");
+                break;
+            case 6:
+                StateChange("JUMP");
+                break;
+        }
+    }
+
+    //애니메이션 이벤트에서 실행
+    public void Summon()
+    {
+        float maxFarLength = 0f;
+        int maxFarIdx = 0;
+        for (int i = 0; i < genPoint.Length; i++)
+        {
+            genPoint[i].distance = (playerTr.position - genPoint[i].transform.position).sqrMagnitude;
+            if(genPoint[i].distance >= maxFarLength)
+            {
+                maxFarLength = genPoint[i].distance;
+                maxFarIdx = i;
+            }
+        }
+        suicideZombiePrefab.transform.position = genPoint[maxFarIdx].transform.position;
+        suicideZombiePrefab.SetActive(true);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, 2.5f);
+    }
+
+    private void Jump()
+    {
+        //점프로 땅찍기 회피 가능
+        if (PlayerInput.Instance.state == PlayerInput.PlayerState.JUMP) return;
+        if (stomp.activeSelf && isStompCanHit)
+        {
+            float distanceToPlayer = (playerTr.position - this.transform.position).sqrMagnitude;
+            if (distanceToPlayer < stompRange)
+            {
+                playerTr.GetComponent<PlayerInput>().PlayerDamage(30, "KNOCKBACK");
+            }
         }
     }
 
@@ -212,11 +271,6 @@ public class BossFSM : MonoBehaviour
         }
     }
 
-    private void Bite()
-    {
-
-    }
-
     private void Scream()
     {
         bossAgent.SetDestination(playerTr.position);
@@ -232,14 +286,11 @@ public class BossFSM : MonoBehaviour
             //일정 각도 안에 있을 때만 패턴 실행
             if (angle < 30)
             {
-                state = BossState.PUNCH;
-                bossAnim.SetTrigger("PUNCH");
+                StateChange("PUNCH");
             }
             else
             {
-                Debug.Log("Out");
-                state = BossState.TURN;
-                bossAnim.SetTrigger("TURN");
+                StateChange("TURN");
             }
         }
     }
@@ -260,9 +311,14 @@ public class BossFSM : MonoBehaviour
         }
     }
 
+    private void Pre_Breath()
+    {
+        bossAgent.SetDestination(playerTr.position);
+    }
+
     private void Breath()
     {
-        Debug.DrawRay(bloodSpray.transform.position, bloodSpray.transform.forward * 3f, Color.green);
+        Debug.DrawRay(bloodSpray.transform.position, bloodSpray.transform.forward * 5f, Color.green);
         RaycastHit hitInfo;
         if (bloodSpray.activeSelf)
         {
@@ -304,8 +360,10 @@ public class BossFSM : MonoBehaviour
         state = BossState.TURN;
     }
 
+    //상태와 트리거 변경해주는 함수
     public void StateChange(string key)
     {
+        //enum을 string으로 변환해줌
         state = (BossState)Enum.Parse(typeof(BossState), key);
         bossAnim.SetTrigger(key);
     }
@@ -314,6 +372,7 @@ public class BossFSM : MonoBehaviour
     {
         Vector3 dir = playerTr.position - this.transform.position;
         transform.forward = dir;
+        //3분의 1확률로 비명->점프공격을 한번 더 한다.
         int rand = UnityEngine.Random.Range(0, 3);
         if (rand == 0)
         {
@@ -359,22 +418,21 @@ public class BossFSM : MonoBehaviour
         }
     }
 
-    public void CanJumpSwitch()
+    public void CanJumpOn()
     {
-        if(!isCanJump)
-        {
-            isCanJump = true;
-        }
-        else
-        {
-            isCanJump = false;
-        }
+        isCanJump = true;
+    }
+    public void CanJumpOff()
+    {
+        isCanJump = false;
     }
 
+    //출혈 효과 + 대미지
     public void BossHitDamage(Vector3 pos , Vector3 normal, int value)
     {
         if (isCanHit)
         {
+            StopAllCoroutines();
             hp -= value;
 
             if (hp > 0)
@@ -422,6 +480,7 @@ public class BossFSM : MonoBehaviour
 
     }
 
+    //출혈 효과 없이 보스 체력만 깎는 함수
     public void BossHitDamage(int value)
     {
         if (isCanHit)
@@ -430,8 +489,7 @@ public class BossFSM : MonoBehaviour
 
             if (hp > 0)
             {
-                isCanHit = false;
-                StartCoroutine(HitCoolTime());
+              
             }
             else
             {
@@ -455,7 +513,7 @@ public class BossFSM : MonoBehaviour
 
     IEnumerator HitCoolTime()
     {
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSeconds(0.5f);
         isCanHit = true;
     }
     

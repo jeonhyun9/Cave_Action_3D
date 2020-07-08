@@ -5,12 +5,11 @@ using UnityEngine.UI;
 
 public class PlayerInput : MonoBehaviour
 {
+    #region "싱글턴"
     private static PlayerInput instance = null;
-
-    //싱글톤
     private void Awake()
     {
-        if(null == instance)
+        if (null == instance)
         {
             instance = this;
         }
@@ -19,28 +18,21 @@ public class PlayerInput : MonoBehaviour
             Destroy(this.gameObject);
         }
     }
-    
+
     public static PlayerInput Instance
     {
         get
         {
-            if(null == instance)
+            if (null == instance)
             {
                 return null;
             }
             return instance;
         }
     }
+    #endregion
 
-    //플레이어 캐릭터 조작 위한 사용자 입력 감지
-    //감지된 입력값을 다른 컴포넌트가 사용할 수 있도록 제공
-    public string moveAxisName = "Vertical";
-    public string sideMoveAxisName = "Horizontal";
-    public string attackButtonName = "Attack";
-    public string turnButtonName = "Turn";
-    public string rollButtonName = "Roll";
-
-    //점수
+    #region "점수 관련 변수"
     public int killCount;
     public float timeCount = 0.00f;
     private float timer = 0f;
@@ -52,34 +44,25 @@ public class PlayerInput : MonoBehaviour
     public GameObject clearTab;
     public GameObject escPanel;
     public GameObject youDiedTab;
+    #endregion
 
-    //마법
+    #region "마법 관련 변수
     public Image fireBallProgress;
     public Image fireWallProgress;
     public GameObject fireBallGenPoint;
     public GameObject fireWallGenPoint;
     public float fireBallCoolTime = 10.0f;
     public float fireWallCoolTime = 60.0f;
+    #endregion
 
-    //사운드
+    #region "사운드 관련 변수
     public bool isMeetBoss = false;
     public GameObject caveMusic;
     public AudioClip[] playerSound;
     private AudioSource audioSource;
+    #endregion
 
-    public bool isFireLit = false;
-    public bool isSwordOn = true;
-    private PlayerMovement playerMovement;
-    public GameObject sword;
-    public GameObject trail;
-    public GameObject enchantTrail;
-    public GameObject normalTrail;
-    public GameObject normalIcon;
-    public GameObject enchantIcon;
-    //불 파티클
-    public GameObject enchant;
-
-    //아이템 변수
+    #region "플레이어 스탯 변수"
     [HideInInspector]
     public int hpPotionCap;
     [HideInInspector]
@@ -90,6 +73,25 @@ public class PlayerInput : MonoBehaviour
     public float stamina = 100f;
     [HideInInspector]
     public float mana = 10f;
+    //스태미너 회복량
+    private int staminaRecoverValue = 10;
+    //남은 마나게이지
+    [HideInInspector]
+    public int fireCapacity;
+    #endregion
+
+    #region "기타 플레이어 변수"
+    public bool isFireLit = false;
+    public bool isSwordOn = true;
+    public bool isPowerAttack = false;
+    private PlayerMovement playerMovement;
+    public GameObject sword;
+    public GameObject trail;
+    public GameObject enchantTrail;
+    public GameObject normalTrail;
+    public GameObject normalIcon;
+    public GameObject enchantIcon;
+    public GameObject enchant;//불 파티클
 
     public Slider hpSlider;
     public Slider staminaSlider;
@@ -103,10 +105,6 @@ public class PlayerInput : MonoBehaviour
     [HideInInspector]
     public Vector3 dir;
 
-    //남은 마나게이지
-    [HideInInspector]
-    public int fireCapacity;
-
     //칼에 불 붙였는지 판별
     public bool isEnchanted = false;
 
@@ -114,12 +112,18 @@ public class PlayerInput : MonoBehaviour
     public GameObject HpPotionParticle;
     public GameObject MpPotionParticle;
 
+    //칼 잔상
     private TrailRenderer trailRenderer;
+
+    //콤보 관련
     private int comboCount;
     private bool isCanCombo = false;
-    private int staminaRecoverValue = 10;
+
+    //구르기 후 돌아갈 회전값
     private Quaternion orgRotation;
-   
+    #endregion
+
+    //플레이어 상태
     public enum PlayerState
     {
         IDLE,
@@ -128,8 +132,6 @@ public class PlayerInput : MonoBehaviour
         ROLL,
         START_CASTING,
         END_CASTING,
-        DRINK_HP,
-        DRINK_MP,
         HIT,
         KNOCKBACK,
         DODGE,
@@ -138,7 +140,6 @@ public class PlayerInput : MonoBehaviour
         DIE,
     }
 
-    //값 할당은 내부에서만 가능
     public Animator playerAnim { get; set; }
     public PlayerState state { get; set;}
     public float move { get; private set; }
@@ -166,27 +167,21 @@ public class PlayerInput : MonoBehaviour
         fireWallProgress.transform.gameObject.SetActive(false);
     }
 
-
     // Update is called once per frame
     void Update()
     {
-        //이에스시 누르면 정지
-        //if (escPanel.activeSelf)
-        //{
-        //    Time.timeScale = 0;
-        //}
-        //else Time.timeScale = 1;
-
         if(Input.GetKeyDown(KeyCode.Escape))
         {
             EscPanelSwitch();
         }
 
+        //유 다이 메시지 띄우기 까지 텀
         if (state == PlayerState.DIE)
         {
             timer += Time.deltaTime * 1;
         }
 
+        //보스 클리어하기 전까지의 시간을 잰다.
         if (!bossClear)
         {
             timeCount += Time.deltaTime * 1.00f;
@@ -195,7 +190,7 @@ public class PlayerInput : MonoBehaviour
         {
             timer += Time.deltaTime * 1;
         }
-
+        
         if (timer > 3 && state == PlayerState.DIE)
         {
             escPanel.SetActive(true);
@@ -287,13 +282,13 @@ public class PlayerInput : MonoBehaviour
         }
 
         //입력 감지
-        if (state != PlayerState.HIT && state != PlayerState.DIE)
+        if (state != PlayerState.HIT && state != PlayerState.DIE && Time.timeScale == 1 && isPowerAttack == false)
         {
-            move = Input.GetAxis(moveAxisName);
-            sideMove = Input.GetAxis(sideMoveAxisName);
-            attack = Input.GetButton(attackButtonName);
-            turn = Input.GetButton(turnButtonName);
-            roll = Input.GetButton(rollButtonName);
+            move = Input.GetAxis("Vertical");
+            sideMove = Input.GetAxis("Horizontal");
+            attack = Input.GetButton("Attack");
+            turn = Input.GetButton("Turn");
+            roll = Input.GetButton("Roll");
 
             mouseX = Input.GetAxis("Mouse X");
             mouseY = Input.GetAxis("Mouse Y");
@@ -414,7 +409,9 @@ public class PlayerInput : MonoBehaviour
                 state = PlayerState.ATTACK;
                 isAttackEnd = false;
                 isCanCombo = false;
+                isPowerAttack = true;
                 playerAnim.SetTrigger("POWERATTACK");
+                PlayAirSound();
             }
 
             //파이어 볼
@@ -427,11 +424,11 @@ public class PlayerInput : MonoBehaviour
             }
 
             //파이어 월
-            if (Input.GetKeyDown(KeyCode.H) && isAttackEnd && mana > 50 && state != PlayerState.ROLL
-                && fireWallCoolTime >= 50)
+            if (Input.GetKeyDown(KeyCode.H) && isAttackEnd && mana > 20 && state != PlayerState.ROLL
+                && fireWallCoolTime >= 20)
             {
-                mana -= 50;
-                fireWallCoolTime = 0;
+                mana -= 20;
+                fireWallCoolTime = 50;
                 playerAnim.SetTrigger("CASTINGWALL");
             }
 
@@ -463,7 +460,6 @@ public class PlayerInput : MonoBehaviour
         sword.SetActive(false);
         playerAnim.SetInteger("ATTACKNUM", 2);
     }
-
 
     private void Roll()
     {
@@ -579,6 +575,7 @@ public class PlayerInput : MonoBehaviour
         isAttackEnd = true;
         isCanCombo = false;
         isRollEnd = true;
+        isPowerAttack = false;
         comboCount = 0;
         playerAnim.SetBool("ISBACKTURN", false);
         playerAnim.SetInteger("ATTACKNUM", 0);
@@ -588,6 +585,7 @@ public class PlayerInput : MonoBehaviour
         print("플레이어 상태 : 아이들");
     }
 
+    //대미지 + 일반 피격 모션
     public void PlayerDamage(float value)
     {
         //구르기일땐 피격 X
@@ -595,7 +593,7 @@ public class PlayerInput : MonoBehaviour
         {
             if (hp - value <= 0)
             {
-                //hp -= value;
+                hp -= value;
                 state = PlayerState.DIE;
                 playerAnim.SetTrigger("DIE");
                 hpSlider.transform.gameObject.SetActive(false);
@@ -603,7 +601,7 @@ public class PlayerInput : MonoBehaviour
             }
             else
             {
-                //hp -= value;
+                hp -= value;
                 state = PlayerState.HIT;
                 audioSource.PlayOneShot(playerSound[1], 1.2f);
                 playerAnim.SetTrigger("HIT");
@@ -612,6 +610,7 @@ public class PlayerInput : MonoBehaviour
         }
     }
 
+    //대미지 + 넉백 모션
     public void PlayerDamage(float value, string key)
     {
         if (state != PlayerState.DIE && state != PlayerState.HIT && state != PlayerState.ROLL && state != PlayerState.DODGE)
@@ -620,7 +619,7 @@ public class PlayerInput : MonoBehaviour
             //transform.rotation = rot;
             if (hp - value <= 0)
             {
-                //hp -= value;
+                hp -= value;
                 state = PlayerState.DIE;
                 playerAnim.SetTrigger("DIE");
                 hpSlider.transform.gameObject.SetActive(false);
@@ -628,7 +627,7 @@ public class PlayerInput : MonoBehaviour
             }
             else
             {
-                //hp -= value;
+                hp -= value;
                 state = PlayerState.HIT;
                 playerAnim.SetTrigger("KNOCKBACK");
                 audioSource.PlayOneShot(playerSound[2], 1f);
@@ -706,7 +705,7 @@ public class PlayerInput : MonoBehaviour
 
     public void PlayAirSound()
     {
-        audioSource.PlayOneShot(playerSound[0], 0.6f);
+        audioSource.PlayOneShot(playerSound[0], 0.8f);
     }
 
     public void EscPanelSwitch()

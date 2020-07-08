@@ -19,12 +19,26 @@ public class EnemyFSM1 : MonoBehaviour
         DIE_FIRE,
     }
 
-  
+    #region "좀비 스탯/상태 + 컴포넌트 변수"
     //애니메이션을 제어하기 위한 애니메이터 컴포넌트
     Animator anim;
 
+    public float findRange = 15f;   //플레이어를 찾는 범위
+    public float attackRange = 2f;  //공격 가능 범위
+    public float moveRange = 30f;   //최대 이동 범위 (현재 사용 안함)
+
+    Vector3 startPoint;             //몬스터 시작 위치
+    //Quaternion startRotation;       //몬스터 시작 회전 값
+    Transform player;               //플레이어 트랜스폼
+    NavMeshAgent agent;             
+
+    //몬스터 일반 변수
+    public int hp = 100;
+
     public EnemyState state { get; private set; }//몬스터 상태 변수
-    #region "자살 좀비"
+    #endregion
+
+    #region "자살 좀비일 경우의 변수"
     //자살 좀비일 경우
     public bool isTypeSuicide = false;
     public GameObject explosionPrefab;
@@ -34,62 +48,39 @@ public class EnemyFSM1 : MonoBehaviour
     public AudioClip suicideSound;
     #endregion
 
-    #region "중간 보스"
-    //자살 좀비일 경우
+    #region "중간 보스일 경우의 변수"
     public bool isTypeMiniBoss = false;
     #endregion
-
-    //유용한 기능
-    #region "IDLE 상태에 필요한 변수들"
-    #endregion
-
-    #region "MOVE 상태에 필요한 변수들"
-    #endregion
-
-    #region "ATTACK 상태에 필요한 변수들"
-    //공격 애니메이션 끝났는지 판별
-    private bool attackAnimEnd = true;
-    #endregion
-
-    #region "RETURN 상태에 필요한 변수들"
-    #endregion
-
-    #region "DAMAGED 상태에 필요한 변수들"
-    #endregion
-
-    #region "DIE 상태에 필요한 변수들"
+ 
+    #region "피격 & 부활관련 변수들"
     private float reviveTimer = 0f;
     public float reviveTime = 5.0f;
+    //불에 맞았는지 판별
     public bool hitByFire = false;
+    //출혈효과를 생성할 좌표
     public GameObject hitPoint;
+    //사망 효과음
     public GameObject dieSound;
     #endregion
 
-    #region "IDLE 상태에 필요한 변수들"
-    #endregion
+    #region "공격 관련 변수들"
 
-    public float findRange = 15f;   //플레이어를 찾는 범위
-    public float attackRange = 2f;  //공격 가능 범위
-    public float moveRange = 30f;
-    bool canAttack = true;
-    Vector3 startPoint;             //몬스터 시작 위치
-    //Quaternion startRotation;       //몬스터 시작 회전 값
-    Transform player;               //플레이어를 찾기 위해
-    NavMeshAgent agent;
-
+    //적 공격시의 히트박스
     public EnemyHitBox HitBox;
+    //히트 박스가 플레이어에게 대미지를 줄 수 있는 시점 판별
+    bool canAttack = true;
 
     //공격 사운드
     public GameObject randomAttackSound;
-
-    //몬스터 일반 변수
-    public int hp = 100;
 
     //공격 딜레이
     float attTime = 2f; //2초에 한번 공격
     float timer = 0f;   //타이머
 
-    // Start is called before the first frame update
+    //공격 애니메이션 끝났는지 판별
+    private bool attackAnimEnd = true;
+    #endregion
+
     void Start()
     {
         //몬스터 상태 초기화
@@ -106,7 +97,15 @@ public class EnemyFSM1 : MonoBehaviour
         //랜덤 값 지정
         transform.eulerAngles = new Vector3(0, UnityEngine.Random.Range(0, 360), 0);
         agent = GetComponent<NavMeshAgent>();
-        
+        anim = GetComponentInChildren<Animator>();
+    }
+
+    private void OnEnable()
+    {
+        if(isTypeSuicide)
+        {
+            state = EnemyState.IDLE;
+        }
     }
 
     // Update is called once per frame
@@ -117,7 +116,7 @@ public class EnemyFSM1 : MonoBehaviour
             moveSound.SetActive(true);
         }
         else moveSound.SetActive(false);
-        //OnDrawGizmos();
+
         //상태에 따른 행동 처리
         switch (state)
         {
@@ -207,10 +206,11 @@ public class EnemyFSM1 : MonoBehaviour
                 //일정 시간마다 플레이어를 공겨하기
                 attackAnimEnd = false;
                 int rand = Random.Range(0, 2);
-                anim.SetInteger("ATTACKNUM", rand);
-                print("어택넘" + rand);
+                if(isTypeMiniBoss)
+                {
+                    anim.SetInteger("ATTACKNUM", rand);
+                }
                 anim.SetTrigger("Attack");
-                print("공격");
                 //플레이어의 필요한 스크립트 컴포넌트를 가져와서 대미지를 주면 된다.
                 //player.GetComponent<PlayerMove>().hitDamage(power);
                 //타이머 초기화
@@ -276,15 +276,12 @@ public class EnemyFSM1 : MonoBehaviour
                     _hit.SetActive(true);
                 }
             }
-
-            if (PlayerInput.Instance.isEnchanted)
-            {
-                //시꺼멓게 타는 마테리얼로 바꾸는 로직인데 작동을 안한다.
-                //bodyMaterial.GetComponent<SkinnedMeshRenderer>().materials[0] = body;
-                //bodyMaterial.GetComponent<SkinnedMeshRenderer>().materials[1] = body1;
-            }
-
-           
+            //if (PlayerInput.Instance.isEnchanted)
+            //{
+            //    //시꺼멓게 타는 마테리얼로 바꾸는 로직인데 작동을 안한다. 추후 적용
+            //    //bodyMaterial.GetComponent<SkinnedMeshRenderer>().materials[0] = body;
+            //    //bodyMaterial.GetComponent<SkinnedMeshRenderer>().materials[1] = body1;
+            //}
         }
     }
 
@@ -327,6 +324,7 @@ public class EnemyFSM1 : MonoBehaviour
         }
     }
 
+    //피격상태 변경 - 애니메이션 이벤트에서 사용
     public void HitStateSwitch()
     {
         if (state != EnemyState.DAMAGED)
@@ -359,7 +357,7 @@ public class EnemyFSM1 : MonoBehaviour
             state = EnemyState.DIE_FIRE;
             PlayerInput.Instance.killCount++;
             //체력 흡수 
-            int rand = Random.Range(0, 8);
+            int rand = Random.Range(0, 10);
             if (rand == 7)
             {
                 PlayerInput.Instance.hpPotionCap++;
@@ -386,7 +384,6 @@ public class EnemyFSM1 : MonoBehaviour
     IEnumerator DieProc()
     {
         //캐릭터 컨트롤러 비활성화
-
         agent.enabled = false;
         //2초 후에 자기 자신을 제거한다.
         yield return new WaitForSeconds(2.0f);
@@ -422,6 +419,10 @@ public class EnemyFSM1 : MonoBehaviour
 
     public void CanAttack()
     {
+        if(isTypeMiniBoss)
+        {
+            HitBox.isTypeMiniBoss = true;
+        }
         HitBox.canAttack = true;
         randomAttackSound.SetActive(true);
     }
@@ -435,19 +436,20 @@ public class EnemyFSM1 : MonoBehaviour
 
     public void Suicide()
     {
-        GameObject explosion = Instantiate(explosionPrefab);
-        explosion.transform.position = this.transform.position;
-        explosion.transform.position += new Vector3(0, 0.2f, 0);
-        GameObject blood = Instantiate(bloodPrefab);
-        blood.transform.position = this.transform.position;
-        if(Vector3.Distance(this.transform.position,PlayerInput.Instance.transform.position) < 2f)
+        var _bloodExplosion = PoolingManager.Instance.GetBloodExplosion();
+        if (_bloodExplosion != null)
+        {
+            _bloodExplosion.transform.position = this.transform.position;
+            _bloodExplosion.transform.rotation = Quaternion.identity;
+            _bloodExplosion.SetActive(true);
+        }
+        if (Vector3.Distance(this.transform.position, PlayerInput.Instance.transform.position) < 2f)
         {
             //충돌 시 방향 벡터 회전값
             //Vector3 normal = Vector3.Cross(this.transform.position, PlayerInput.Instance.transform.position);
             //Quaternion rot = Quaternion.FromToRotation(-Vector3.forward, normal);
             PlayerInput.Instance.PlayerDamage(50, "KNOCKBACK");
         }
-        Destroy(explosion, 3f);
         PlayerInput.Instance.killCount++;
         this.gameObject.SetActive(false);
     }

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,7 +7,7 @@ public class RingOfFire : MonoBehaviour
 {
     ParticleSystem[] particleSystems;
     private float currTime = 0;
-
+    private bool canDamage = true;
     private void Awake()
     {
         particleSystems = GetComponentsInChildren<ParticleSystem>();   
@@ -23,14 +24,14 @@ public class RingOfFire : MonoBehaviour
     private void Update()
     {
         currTime += Time.deltaTime;
-        if(currTime > 60)
+        if(currTime > 20)
         {
             currTime = 0;
             this.gameObject.SetActive(false);
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerStay(Collider other)
     {
         if (other.gameObject.layer == LayerMask.NameToLayer("ENEMY"))
         {
@@ -38,7 +39,23 @@ public class RingOfFire : MonoBehaviour
         }
         if (other.gameObject.layer == LayerMask.NameToLayer("BOSS"))
         {
-            other.transform.GetComponent<BossFSM>().BossHitDamage(10);
+            BossFireRingDamage(other);
         }
+    }
+
+    private void BossFireRingDamage(Collider other)
+    {
+        if(canDamage)
+        {
+            other.transform.GetComponent<BossFSM>().BossHitDamage(10);
+            canDamage = false;
+            StartCoroutine(WaitHalfSecond());
+        }
+    }
+
+    IEnumerator WaitHalfSecond()
+    {
+        yield return new WaitForSeconds(0.5f);
+        canDamage = true;
     }
 }

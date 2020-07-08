@@ -5,14 +5,28 @@ using UnityEngine;
 public class EnemyHitBox : MonoBehaviour
 {
     public bool canAttack;
-   
+    public bool isTypeMiniBoss;
+
     private void OnTriggerEnter(Collider other)
     {
-        if (other.name.Contains("Player") && canAttack == true)
+        if(isTypeMiniBoss)
         {
-            other.gameObject.GetComponent<PlayerInput>().PlayerDamage(10);
-            canAttack = false;
+            if (other.name.Contains("Player") && canAttack == true)
+            {
+                other.gameObject.GetComponent<PlayerInput>().PlayerDamage(10,"KNOCKBACK");
+                canAttack = false;
+            }
         }
+        else
+        {
+            if (other.name.Contains("Player") && canAttack == true)
+            {
+                other.gameObject.GetComponent<PlayerInput>().PlayerDamage(10);
+                canAttack = false;
+            }
+        }
+        
+        
     }
 
 }

@@ -1030,19 +1030,19 @@ NavMeshAgent:
   m_GameObject: {fileID: 3512380877903236780}
   m_Enabled: 1
   m_AgentTypeID: 0
-  m_Radius: 0.2
+  m_Radius: 0.1
   m_Speed: 2.5
   m_Acceleration: 5
   avoidancePriority: 50
-  m_AngularSpeed: 300
-  m_StoppingDistance: 0.5
+  m_AngularSpeed: 330
+  m_StoppingDistance: 0
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 0
   m_AutoRepath: 1
   m_Height: 2
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 2
+  m_ObstacleAvoidanceType: 4
 --- !u!114 &4359222881396022969
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1055,6 +1055,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efd2955bae89aad4eb781bb6504bb354, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  findRange: 5
+  attackRange: 1
+  moveRange: 30
+  hp: 800
   isTypeSuicide: 0
   explosionPrefab: {fileID: 0}
   bloodPrefab: {fileID: 0}
@@ -1066,12 +1070,8 @@ MonoBehaviour:
   hitByFire: 0
   hitPoint: {fileID: 6738444053217876282}
   dieSound: {fileID: 8999941143098630535}
-  findRange: 5
-  attackRange: 1
-  moveRange: 30
   HitBox: {fileID: 5096273711312409760}
   randomAttackSound: {fileID: 6236401869600513906}
-  hp: 800
 --- !u!1 &3554707818634739627
 GameObject:
   m_ObjectHideFlags: 0

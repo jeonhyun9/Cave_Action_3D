@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+
 //바이너리 파일 포맷을 위한 네임스페이스
 using System.Runtime.Serialization.Formatters.Binary;
 //데이터 저장 클래스에 접근하기 위한 네임스페이스

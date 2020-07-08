@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -41,35 +40,23 @@ public class TailLight : MonoBehaviour
                 fireParticle.SetActive(true);
             }
             transform.position = Vector3.Lerp(transform.position, target.transform.position, 0.1f);
-            
         }
-        
-        
-        //orbitAround();
     }
 
     private void LateUpdate()
     {
+        Vector3 tempDir = Vector3.zero;
+        tempDir = transform.position;
+        tempDir.y = 1;
+        transform.position = tempDir;
+
         if(!isCasting)
         {
             TraceSpeed = nonCastingTraceSpeed;
-            //Vector3 orgPos = transform.position;
-            //orgPos.y = 0.8f;
-            //transform.position = orgPos;
         }
         else
         {
             TraceSpeed = castingTraceSpeed;
-           // Vector3 orgPos = transform.position;
-           // orgPos.y = 1f;
-           // transform.position = orgPos;
         }
-       
-    }
-
-    // Start is called before the first frame update
-    private void orbitAround()
-    {
-        transform.RotateAround(target.transform.position, Vector3.up, rotateSpeed * Time.deltaTime);
     }
 }
