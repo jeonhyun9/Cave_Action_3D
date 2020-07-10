@@ -175,6 +175,17 @@ public class PlayerInput : MonoBehaviour
             EscPanelSwitch();
         }
 
+        //치트
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            fireCapacity++;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha3))
+        {
+            killCount++;
+        }
+
         //유 다이 메시지 띄우기 까지 텀
         if (state == PlayerState.DIE)
         {
@@ -366,6 +377,11 @@ public class PlayerInput : MonoBehaviour
                 HpRecover();
             }
 
+            if (Input.GetKeyDown(KeyCode.Alpha1))
+            {
+                CheatRecover();
+            }
+
             //마나회복
             if (Input.GetKeyDown(KeyCode.F2) && mana < fireCapacity * 100 && mpPotionCap > 0)
             {
@@ -438,6 +454,8 @@ public class PlayerInput : MonoBehaviour
                 if (stamina > 100) stamina = 100;
                 stamina += staminaRecoverValue * Time.deltaTime;
             }
+
+            
         }
         //옆으로 이동 중인지 판별한다.
         if (sideMove != 0 && move == 0)
@@ -454,6 +472,7 @@ public class PlayerInput : MonoBehaviour
         sword.SetActive(false);
         playerAnim.SetInteger("ATTACKNUM", 1);
     }
+
     private void AttackCombo2()
     {
         isSwordOn = false;
@@ -703,9 +722,28 @@ public class PlayerInput : MonoBehaviour
         }
     }
 
+    private void CheatRecover()
+    {
+        HpPotionParticle.SetActive(true);
+        print("체력 리필");
+        if (hp + 30 <= 100)
+        {
+            hp += 30;
+        }
+        else
+        {
+            hp = 100;
+        }
+    }
+
     public void PlayAirSound()
     {
         audioSource.PlayOneShot(playerSound[0], 0.8f);
+    }
+
+    public void PlayLandSound()
+    {
+        audioSource.PlayOneShot(playerSound[6], 0.8f);
     }
 
     public void EscPanelSwitch()

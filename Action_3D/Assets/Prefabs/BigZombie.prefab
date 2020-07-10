@@ -985,10 +985,10 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 116
-  m_CollisionDetection: 2
+  m_CollisionDetection: 3
 --- !u!136 &4359222881396022968
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1058,7 +1058,7 @@ MonoBehaviour:
   findRange: 5
   attackRange: 1
   moveRange: 30
-  hp: 800
+  hp: 600
   isTypeSuicide: 0
   explosionPrefab: {fileID: 0}
   bloodPrefab: {fileID: 0}
@@ -2731,7 +2731,7 @@ PrefabInstance:
     - target: {fileID: 3784613363285200772, guid: 3b5521da212caad439b877195a5b3d4c,
         type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5937474447106843411, guid: 3b5521da212caad439b877195a5b3d4c,
         type: 3}

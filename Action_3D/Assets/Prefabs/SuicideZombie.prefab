@@ -2151,6 +2151,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efd2955bae89aad4eb781bb6504bb354, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  findRange: 10
+  attackRange: 2
+  moveRange: 30
+  hp: 100
   isTypeSuicide: 1
   explosionPrefab: {fileID: 170648, guid: a89b8ca5fa469ff46bd1dee66128651f, type: 3}
   bloodPrefab: {fileID: 100000, guid: 358b75ea5451cf143ab19029a189097d, type: 3}
@@ -2161,11 +2165,9 @@ MonoBehaviour:
   reviveTime: 5
   hitByFire: 0
   hitPoint: {fileID: 0}
-  findRange: 10
-  attackRange: 2
-  moveRange: 30
+  dieSound: {fileID: 0}
   HitBox: {fileID: 5899449796666331463}
-  hp: 100
+  randomAttackSound: {fileID: 0}
 --- !u!82 &3621890631386365229
 AudioSource:
   m_ObjectHideFlags: 0
@@ -2652,6 +2654,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: HitBox
+      objectReference: {fileID: 0}
+    - target: {fileID: 3784613363285200772, guid: 3b5521da212caad439b877195a5b3d4c,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5937474447106843411, guid: 3b5521da212caad439b877195a5b3d4c,
         type: 3}

@@ -11,22 +11,18 @@ public class EnemyHitBox : MonoBehaviour
     {
         if(isTypeMiniBoss)
         {
-            if (other.name.Contains("Player") && canAttack == true)
+            if (other.name.Contains("Player"))
             {
-                other.gameObject.GetComponent<PlayerInput>().PlayerDamage(10,"KNOCKBACK");
-                canAttack = false;
+                other.gameObject.GetComponent<PlayerInput>().PlayerDamage(20,"KNOCKBACK");
             }
         }
         else
         {
-            if (other.name.Contains("Player") && canAttack == true)
+            if (other.name.Contains("Player"))
             {
                 other.gameObject.GetComponent<PlayerInput>().PlayerDamage(10);
-                canAttack = false;
             }
         }
-        
-        
     }
 
 }

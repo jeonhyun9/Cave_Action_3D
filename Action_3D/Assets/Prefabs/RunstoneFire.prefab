@@ -37618,7 +37618,6 @@ GameObject:
   - component: {fileID: 400016}
   - component: {fileID: 19800016}
   - component: {fileID: 19900016}
-  - component: {fileID: 11400000}
   - component: {fileID: 97481315747972557}
   m_Layer: 0
   m_Name: RunstoneFire
@@ -42339,18 +42338,6 @@ ParticleSystemRenderer:
   m_Mesh2: {fileID: 0}
   m_Mesh3: {fileID: 0}
   m_MaskInteraction: 0
---- !u!114 &11400000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 100016}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 290511f557be86140b91c87239c3ab06, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!82 &97481315747972557
 AudioSource:
   m_ObjectHideFlags: 0

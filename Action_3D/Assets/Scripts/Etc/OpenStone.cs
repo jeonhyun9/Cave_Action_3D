@@ -47,9 +47,7 @@ public class OpenStone : MonoBehaviour
                 PlayerInput.Instance.PlusFireCap();
                 PlayerInput.Instance.mpPotionCap = 1;
                 PlayerInput.Instance.ManaRefill();
-                GameObject effect = Instantiate(fireEffect, this.transform);
-                effect.transform.position += new Vector3(0, 0.1f, 0);
-                Destroy(effect, 1f);
+                fireEffect.SetActive(true);
                 fire.SetActive(true);
                 floatingText.SetActive(true);
             }
@@ -76,7 +74,11 @@ public class OpenStone : MonoBehaviour
         if(isFloating && alpha - 1 > 0)
         {
             alpha -= 1;
-            if (alpha == 0) floatingText.SetActive(false);
+            if (alpha == 0)
+            {
+                floatingText.SetActive(false);
+                fireEffect.SetActive(false);
+            }
             targetColor = new Color32(255, 133, 0, alpha);
             textMeshPro.color = targetColor;
         }

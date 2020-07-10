@@ -51,7 +51,7 @@ public class BossFSM : MonoBehaviour
 
     #region "보스 스탯 + 상태 변수"
     BossState state;
-    float hp = 3000;
+    float hp = 6000;
     float attackRange = 1.5f;
     float findRange = 5f;
     bool isCanJump = false;
@@ -59,6 +59,8 @@ public class BossFSM : MonoBehaviour
     bool isStompCanHit = false;
     bool isFirstPattern = true;
     private float stompRange = 5f;
+    //이전 패턴 변수 저장
+    private int prePattern;
     #endregion
 
     // Start is called before the first frame update
@@ -84,7 +86,7 @@ public class BossFSM : MonoBehaviour
     {
         if(bossHpPanel.activeSelf)
         {
-            hpBar.fillAmount = hp / 3000;
+            hpBar.fillAmount = hp / 6000;
         }
         if (state == BossState.MOVE && Time.timeScale == 1)
         {
@@ -159,12 +161,13 @@ public class BossFSM : MonoBehaviour
         }
         else
         {
-            pattern = UnityEngine.Random.Range(0, 7);
+            pattern = UnityEngine.Random.Range(0, 5);
             print("패턴번호" + pattern);
         }
         switch (pattern)
         {
             case 0:
+                if (prePattern == 0) return;
                 if (Vector3.Distance(transform.position, playerTr.position) <= attackRange)//공격 범위 안에 들어옴
                 {
                     Vector3 direction = playerTr.position - this.transform.position;
@@ -185,30 +188,37 @@ public class BossFSM : MonoBehaviour
                 {
                     StateChange("MOVE");
                 }
+                prePattern = 0;
                 break;
             case 1:
+                if (prePattern == 1) return;
                 StateChange("JUMP");
+                prePattern = 1;
                 break;
+
             case 2:
+                if (prePattern == 2) return;
                 StateChange("SCREAM");
+                prePattern = 2;
                 break;
+
             case 3:
+                if (prePattern == 3) return;
                 state = BossState.PRE_BREATH;
                 bossAnim.SetTrigger("PRE_BREATH");
+                prePattern = 3;
                 break;
+
             case 4:
-                StateChange("MOVE");
-                break;
-            case 5:
+                if (prePattern == 4) return;
                 if(suicideZombiePrefab.activeSelf)
                 {
                     StateChange("TURN");
                 }
                 else StateChange("SUMMON");
+                prePattern = 4;
                 break;
-            case 6:
-                StateChange("JUMP");
-                break;
+
         }
     }
 
@@ -254,8 +264,7 @@ public class BossFSM : MonoBehaviour
     {
         if (Vector3.Distance(transform.position, playerTr.position) <= attackRange)//공격 범위 안에 들어옴
         {
-            state = BossState.PUNCH;
-            bossAnim.SetTrigger("PUNCH");
+            StateChange("PUNCH");
         }
         else
         {
@@ -301,7 +310,7 @@ public class BossFSM : MonoBehaviour
         {
             cc.SimpleMove(transform.forward);
         }
-        if(stomp.activeSelf && isStompCanHit )
+        if(stomp.activeSelf && isStompCanHit && PlayerInput.Instance.state != PlayerInput.PlayerState.ROLL)
         {
             float distanceToPlayer = (playerTr.position - this.transform.position).sqrMagnitude;
             if(distanceToPlayer < stompRange)
@@ -372,8 +381,8 @@ public class BossFSM : MonoBehaviour
     {
         Vector3 dir = playerTr.position - this.transform.position;
         transform.forward = dir;
-        //3분의 1확률로 비명->점프공격을 한번 더 한다.
-        int rand = UnityEngine.Random.Range(0, 3);
+        //4분의 1확률로 비명->점프공격을 한번 더 한다.
+        int rand = UnityEngine.Random.Range(0, 4);
         if (rand == 0)
         {
             StateChange("SCREAM");
@@ -558,4 +567,6 @@ public class BossFSM : MonoBehaviour
         //주먹 휘두르는 사운드 출력
         audioSource.PlayOneShot(bossSoundClip[3], 1f);
     }
+
+
 }

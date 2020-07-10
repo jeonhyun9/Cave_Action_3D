@@ -32,23 +32,21 @@ public class RuneStone : MonoBehaviour
                 PlayerInput.Instance.PlusFireCap();
                 PlayerInput.Instance.mpPotionCap = 1;
                 PlayerInput.Instance.ManaRefill();
-                //GameObject effect = Instantiate(fireEffect, this.transform);
-                //effect.transform.position += new Vector3(0, 0.1f, 0);
-                //Destroy(effect, 1f);
+                fireEffect.SetActive(true);
                 floatingText.SetActive(true);
             }
             else PlayerInput.Instance.ManaRefill();
         }
 
         //텍스트 메쉬 프로의 투명도 증가
-        if (fire.activeSelf && alpha < 255 && isFloating == false)
+        if (fire.activeSelf && alpha + 1 < 255 && isFloating == false)
         {
-            alpha += (byte)(Time.deltaTime * 51);
+            alpha += 1;
             targetColor = new Color32(255, 133, 0, alpha);
             textMeshPro.color = targetColor;
         }
         //글씨가 완전히 나타난 후 3초를 센다.
-        else if(fire.activeSelf)
+        else if (fire.activeSelf)
         {
             if (floatingTimer < 3f)
             {
@@ -56,15 +54,22 @@ public class RuneStone : MonoBehaviour
             }
             else isFloating = true;
         }
-        
+
         //3초가 지난 후 부터 투명도가 다시 감소하고, 텍스트 메쉬 프로 비활성화
-        if(isFloating && alpha > 0)
+        if (isFloating && alpha - 1 > 0)
         {
-            alpha -= (byte)(Time.deltaTime * 51);
-            if (alpha == 0) floatingText.SetActive(false);
+            alpha -= 1;
+            if (alpha == 0)
+            {
+                floatingText.SetActive(false);
+                fireEffect.SetActive(false);
+            }
             targetColor = new Color32(255, 133, 0, alpha);
             textMeshPro.color = targetColor;
         }
+
+        //컴퓨터 성능에 따라 플로팅 시간이 달라지지만 알파값은 byte만 받을 수 있다..(Time.deltaTime 못들어감)
+        //형 변환을 시도해봤지만 제대로 동작하지않는다 ㅠ
     }
 
 }
