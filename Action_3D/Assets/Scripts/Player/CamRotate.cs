@@ -33,25 +33,15 @@ public class CamRotate : MonoBehaviour
         float h = playerInput.mouseX;
         if(h!= 0&& PlayerInput.Instance.state != PlayerInput.PlayerState.HIT)
         {
-            //angleX = h * speed * Time.deltaTime;
-            ////angleY = v * speed * Time.deltaTime;
-            //angleY = Mathf.Clamp(angleY, -60, 60);
-            //transform.eulerAngles += new Vector3(0, angleX, 0);
             Vector3 rot = transform.rotation.eulerAngles; // 현재 카메라의 각도를 Vector3로 반환
             rot.y += Input.GetAxis("Mouse X") * speed; // 마우스 X 위치 * 회전 스피드
             Quaternion q = Quaternion.Euler(rot); // Quaternion으로 변환
             q.z = 0;
             transform.rotation = Quaternion.Slerp(transform.rotation, q, 2f);
         }
-        
-        //if(Input.GetMouseButton(1)==false)
-        //{
-        //    angleX = q * speed * Time.deltaTime;
-        //    angleY = Mathf.Clamp(angleY, -60, 60);
-        //    transform.eulerAngles += new Vector3(0, angleX, 0);
-        //}
     }
     
+    //마우스 속도 조절
     private void MouseSpeedAdjustment()
     {
         speed = mouseSpeedSlider.value;

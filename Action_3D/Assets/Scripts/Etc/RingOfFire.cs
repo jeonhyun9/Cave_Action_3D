@@ -39,6 +39,7 @@ public class RingOfFire : MonoBehaviour
         }
         if (other.gameObject.layer == LayerMask.NameToLayer("BOSS"))
         {
+            //보스에게는 지속피해를 준다.
             BossFireRingDamage(other);
         }
     }

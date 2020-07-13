@@ -37,6 +37,7 @@ public class OpenStone : MonoBehaviour
             PlayerInput.Instance.isFireLit = true;
         }
         else PlayerInput.Instance.isFireLit = false;
+
         //플레이어가 캐스팅 중이면 실행
         if(PlayerInput.Instance.state == PlayerInput.PlayerState.END_CASTING && 
             Vector3.Distance(transform.position,PlayerInput.Instance.transform.position) < 2f)

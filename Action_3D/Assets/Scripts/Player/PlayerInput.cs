@@ -354,6 +354,7 @@ public class PlayerInput : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.LeftShift) && isRollEnd && stamina > 30 && state != PlayerState.ATTACK)
             {
                 stamina -= 30;
+                //바람 가르는 소리 출력
                 audioSource.PlayOneShot(playerSound[0], 0.6f);
                 Roll();
             }
@@ -533,6 +534,7 @@ public class PlayerInput : MonoBehaviour
         #endregion
     }
 
+    //구르기 끝난 시점
     public void RollEnd()
     {
         if(!isBackButtonInput)
@@ -677,6 +679,7 @@ public class PlayerInput : MonoBehaviour
         yield return new WaitForSeconds(1f);
     }
 
+    //애니메이션 이벤트에서 실행
     private void Enchant()
     {
         isEnchanted = true;
@@ -736,11 +739,13 @@ public class PlayerInput : MonoBehaviour
         }
     }
 
+    //바람가르는 소리 출력
     public void PlayAirSound()
     {
         audioSource.PlayOneShot(playerSound[0], 0.8f);
     }
 
+    //땅 딛는 소리 출력
     public void PlayLandSound()
     {
         audioSource.PlayOneShot(playerSound[6], 0.8f);

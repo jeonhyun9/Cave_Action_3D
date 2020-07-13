@@ -10,6 +10,7 @@ public class FireBall : MonoBehaviour
     void Update()
     {
         currTime += Time.deltaTime;
+        //일정 시간 지나면 폭발한다.
         if (currTime > 5f)
         {
             var _explosion = PoolingManager.Instance.GetFireExplosion();
@@ -26,6 +27,7 @@ public class FireBall : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        //적이나 보스에게 닿으면 폭발한다.
         if(other.gameObject.layer==LayerMask.NameToLayer("ENEMY"))
         {
             if(other.transform.GetComponent<EnemyFSM1>().state != EnemyFSM1.EnemyState.DIE

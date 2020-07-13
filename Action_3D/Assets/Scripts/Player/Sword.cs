@@ -9,6 +9,7 @@ public class Sword : MonoBehaviour
     
     private void OnTriggerEnter(Collider other)
     {
+        //강공격이면 공격력 상승
         if (PlayerInput.Instance.isPowerAttack)
         {
             damage = 120;
@@ -40,6 +41,9 @@ public class Sword : MonoBehaviour
             }
         }
     }
+
+    //콜리전엔터로 사용하는 방법
+
     //private void OnCollisionEnter(Collision collision)
     //{
     //    if (PlayerInput.Instance.state == PlayerInput.PlayerState.ATTACK)

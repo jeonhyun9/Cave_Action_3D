@@ -10,15 +10,15 @@ public class BossFSM : MonoBehaviour
     {
         IDLE,
         MOVE,
-        PATTERN_CHOICE,
+        PATTERN_CHOICE, //랜덤 패턴 실행하는 상태
         TURN,
         SCREAM,
         PUNCH,
         JUMP,
         JUMP_ATTACK,
-        PRE_BREATH,
-        BREATH,
-        SUMMON,
+        PRE_BREATH, //피 뿜기 전에 방향 재설정하는 상태
+        BREATH, //피 뿜기
+        SUMMON, //자폭 좀비 소환
         DIE,
     }
 
@@ -225,18 +225,22 @@ public class BossFSM : MonoBehaviour
     //애니메이션 이벤트에서 실행
     public void Summon()
     {
-        float maxFarLength = 0f;
-        int maxFarIdx = 0;
+        //가장 먼 거리
+        float farthestDistance = 0f;
+        //소환지점의 인덱스
+        int farthestIndex = 0;
         for (int i = 0; i < genPoint.Length; i++)
         {
             genPoint[i].distance = (playerTr.position - genPoint[i].transform.position).sqrMagnitude;
-            if(genPoint[i].distance >= maxFarLength)
+            if(genPoint[i].distance >= farthestDistance)
             {
-                maxFarLength = genPoint[i].distance;
-                maxFarIdx = i;
+                farthestDistance = genPoint[i].distance;
+                farthestIndex = i;
             }
         }
-        suicideZombiePrefab.transform.position = genPoint[maxFarIdx].transform.position;
+        //자폭 좀비의 위치를 플레이어에게서 가장 먼 소환지점으로 변경.
+        suicideZombiePrefab.transform.position = genPoint[farthestIndex].transform.position;
+        //오브젝트 활성화
         suicideZombiePrefab.SetActive(true);
     }
 
@@ -310,6 +314,7 @@ public class BossFSM : MonoBehaviour
         {
             cc.SimpleMove(transform.forward);
         }
+        //일정 거리 이하면 피해를 준다.
         if(stomp.activeSelf && isStompCanHit && PlayerInput.Instance.state != PlayerInput.PlayerState.ROLL)
         {
             float distanceToPlayer = (playerTr.position - this.transform.position).sqrMagnitude;
@@ -322,6 +327,7 @@ public class BossFSM : MonoBehaviour
 
     private void Pre_Breath()
     {
+        //피 뿜기전에 방향 재설정해줌.
         bossAgent.SetDestination(playerTr.position);
     }
 

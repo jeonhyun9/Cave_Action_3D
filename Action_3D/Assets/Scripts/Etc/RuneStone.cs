@@ -68,8 +68,7 @@ public class RuneStone : MonoBehaviour
             textMeshPro.color = targetColor;
         }
 
-        //컴퓨터 성능에 따라 플로팅 시간이 달라지지만 알파값은 byte만 받을 수 있다..(Time.deltaTime 못들어감)
-        //형 변환을 시도해봤지만 제대로 동작하지않는다 ㅠ
+        //컴퓨터 성능에 따라 플로팅 시간이 달라진다. 추후 수정
     }
 
 }
